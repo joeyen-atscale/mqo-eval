@@ -93,6 +93,21 @@ enum Command {
         format: String,
     },
 
+    /// Render a run record as a markdown summary report.
+    Report {
+        /// Whether to render as markdown (currently the only format).
+        #[arg(long)]
+        markdown: bool,
+
+        /// Path to the run record JSON file (RunRecord shape).
+        #[arg(long, value_name = "FILE")]
+        run: String,
+
+        /// Output file path (stdout when omitted).
+        #[arg(long, value_name = "FILE")]
+        out: Option<String>,
+    },
+
     /// Report verdict flips between two result runs.
     Compare {
         /// First results file.
@@ -194,6 +209,28 @@ fn run_main() -> anyhow::Result<()> {
                 OutputFormat::Json => {
                     let json = serde_json::to_string_pretty(&stats)?;
                     println!("{json}");
+                }
+            }
+        }
+
+        Command::Report { markdown, run: run_path, out } => {
+            if !markdown {
+                anyhow::bail!("--markdown flag is required (it is currently the only report format)");
+            }
+            let json_str = std::fs::read_to_string(&run_path)
+                .map_err(|e| anyhow::anyhow!("cannot read {run_path}: {e}"))?;
+            // Shape-detect: if the top-level JSON has a "cases" key it is a
+            // RunRecord; otherwise we don't support the legacy flat format here.
+            let record: RunRecord = serde_json::from_str(&json_str)
+                .map_err(|e| anyhow::anyhow!("cannot parse RunRecord from {run_path}: {e}"))?;
+            let md = report::markdown::render(&record);
+            match out {
+                Some(path) => {
+                    std::fs::write(&path, &md)
+                        .map_err(|e| anyhow::anyhow!("cannot write {path}: {e}"))?;
+                }
+                None => {
+                    print!("{md}");
                 }
             }
         }

@@ -1,5 +1,7 @@
 //! Run report renderers for mqo-eval.
 //!
-//! Currently provides an HTML renderer (`html::render`).
+//! Provides an HTML renderer (`html::render`) and a markdown summary
+//! renderer (`markdown::render`).
 
 pub mod html;
+pub mod markdown;
