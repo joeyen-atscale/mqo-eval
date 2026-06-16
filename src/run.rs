@@ -2,6 +2,7 @@
 
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 
+use std::path::Path;
 use std::time::Instant;
 
 use anyhow::{bail, Context, Result};
@@ -9,7 +10,11 @@ use serde_json::Value;
 
 use crate::{
     oracle,
-    types::{OracleMode, Question, QuestionsFile, QuestionResult},
+    summary,
+    types::{
+        CaseRecord, OracleMode, Question, QuestionsFile, QuestionResult, RunConfigRecord,
+        RunRecord, ServerInfo,
+    },
 };
 
 /// Configuration for a single `run` invocation.
@@ -27,10 +32,16 @@ pub struct RunConfig {
     pub pg_host: Option<String>,
     /// Environment variable name that holds the PG password.
     pub pg_pass_env: String,
-    /// Output path for results JSON.
+    /// Output path for results JSON (legacy flat array; optional).
     pub out_path: String,
     /// Output format (text or json).
     pub format: OutputFormat,
+    /// Root directory for the structured run archive (`results/` by default).
+    pub results_dir: String,
+    /// `AtScale` catalog name, if provided.
+    pub catalog: Option<String>,
+    /// Maximum result rows per query (forwarded to agent; stored in record).
+    pub max_result_rows: u64,
 }
 
 /// Output format for the run command.
@@ -56,11 +67,18 @@ impl std::str::FromStr for OutputFormat {
 
 /// Execute a run and return the per-question results.
 ///
+/// Also writes a structured [`RunRecord`] to the archive directory tree:
+/// `<results_dir>/<agent>/<server>/<corpus_id>/<run_id>.json`.
+///
 /// # Errors
 ///
 /// Returns an error if the questions file cannot be read, the oracle is
 /// misconfigured, or writing the output fails.
 pub fn run(config: &RunConfig) -> Result<Vec<QuestionResult>> {
+    // Capture run start time once, before any work.
+    let run_wall_start = std::time::SystemTime::now();
+    let started_at = format_system_time(run_wall_start);
+
     // Validate pgwire config eagerly — fail fast before any questions run.
     if config.oracle == OracleMode::Pgwire {
         oracle::pgwire_password(&config.pg_pass_env).context("pgwire oracle pre-check")?;
@@ -73,16 +91,41 @@ pub fn run(config: &RunConfig) -> Result<Vec<QuestionResult>> {
         serde_yaml::from_str(&yaml_text).context("failed to parse questions YAML")?;
 
     let mut results = Vec::with_capacity(qfile.questions.len());
+    let mut case_records = Vec::with_capacity(qfile.questions.len());
 
     for q in &qfile.questions {
         let result = evaluate_question(q, config)?;
+        // Build a CaseRecord from this QuestionResult.
+        let case = CaseRecord {
+            id: result.id.clone(),
+            verdict: result.verdict.clone(),
+            latency_ms: result.latency_ms,
+            row_recall: None,
+            column_recall: None,
+            jaccard: None,
+            rep_verdicts: None,
+            detail: None,
+        };
+        case_records.push(case);
         results.push(result);
     }
 
-    // Write results.json.
+    let finished_at = format_system_time(std::time::SystemTime::now());
+
+    // Write legacy flat results.json (backward compatibility, FR5).
     let json = serde_json::to_string_pretty(&results).context("failed to serialize results")?;
     std::fs::write(&config.out_path, &json)
         .with_context(|| format!("failed to write results to {}", config.out_path))?;
+
+    // Assemble and write the structured RunRecord archive (FR1–FR4).
+    let record = assemble_run_record(
+        config,
+        case_records,
+        &results,
+        started_at,
+        finished_at,
+    );
+    write_run_record(config, &record)?;
 
     // Print summary to stdout.
     match config.format {
@@ -91,6 +134,163 @@ pub fn run(config: &RunConfig) -> Result<Vec<QuestionResult>> {
     }
 
     Ok(results)
+}
+
+/// Format a [`std::time::SystemTime`] as a compact ISO-8601-like string.
+///
+/// Uses `YYYYMMDDTHHMMSSZ` for the `run_id` component and a fuller
+/// `YYYY-MM-DDTHH:MM:SSZ` for the human-readable timestamp fields.
+fn format_system_time(t: std::time::SystemTime) -> String {
+    // Seconds since Unix epoch.
+    let secs = t
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    secs_to_iso8601(secs)
+}
+
+/// Convert Unix seconds to a naive ISO-8601 UTC timestamp (`YYYY-MM-DDTHH:MM:SSZ`).
+fn secs_to_iso8601(secs: u64) -> String {
+    // Hand-roll without chrono to keep dependencies minimal.
+    let sec = secs % 60;
+    let min = (secs / 60) % 60;
+    let hour = (secs / 3600) % 24;
+    let days = secs / 86400;
+    let (year, month, day) = days_to_ymd(days);
+    format!("{year:04}-{month:02}-{day:02}T{hour:02}:{min:02}:{sec:02}Z")
+}
+
+/// Convert a compact `ISO`-like string to the `run_id` prefix format (remove `-`, `:`).
+fn iso_to_compact(iso: &str) -> String {
+    iso.chars().filter(char::is_ascii_alphanumeric).collect()
+}
+
+/// Compute year/month/day from days since Unix epoch (1970-01-01).
+///
+/// Uses the proleptic Gregorian calendar.
+///
+/// Algorithm: <http://howardhinnant.github.io/date_algorithms.html>
+/// (`civil_from_days`, signed → adjusted for u64 epoch origin).
+const fn days_to_ymd(days: u64) -> (u64, u64, u64) {
+    let z = days + 719_468;
+    let era = z / 146_097;
+    let day_of_era = z - era * 146_097;
+    let year_of_era = (day_of_era - day_of_era / 1460 + day_of_era / 36524 - day_of_era / 146_096) / 365;
+    let year_raw = year_of_era + era * 400;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let mp = (5 * day_of_year + 2) / 153;
+    let day = day_of_year - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = if month <= 2 { year_raw + 1 } else { year_raw };
+    (year, month, day)
+}
+
+/// Derive the `<server>` path segment from the oracle mode.
+const fn server_label(oracle: &OracleMode) -> &'static str {
+    match oracle {
+        OracleMode::Pgwire => "pgwire",
+        OracleMode::Fixture => "fixture",
+    }
+}
+
+/// Assemble a [`RunRecord`] from a completed run.
+fn assemble_run_record(
+    config: &RunConfig,
+    cases: Vec<CaseRecord>,
+    results: &[QuestionResult],
+    started_at: String,
+    finished_at: String,
+) -> RunRecord {
+    let corpus_id = corpus_id_from_path(&config.questions_path);
+    let agent_name = agent_basename(&config.agent_cmd);
+    let server_name = server_label(&config.oracle).to_owned();
+
+    // run_id = <compact_ts>-<first8_of_corpus_id>
+    let compact_ts = iso_to_compact(&started_at);
+    let corpus8: String = corpus_id.chars().take(8).collect();
+    let run_id = format!("{compact_ts}-{corpus8}");
+
+    let summary = summary::summarize(results);
+
+    let run_config_record = RunConfigRecord {
+        repeat: 1,
+        min_pass_reps: 1,
+        pass_threshold: 1.0,
+        catalog: config.catalog.clone(),
+        model: config.model.clone(),
+        oracle_mode: server_name.clone(),
+        max_result_rows: config.max_result_rows,
+    };
+
+    RunRecord {
+        run_id,
+        started_at,
+        finished_at,
+        agent: agent_name,
+        server: ServerInfo {
+            name: server_name,
+            mqo_mcp_version: None,
+        },
+        corpus_id,
+        config: run_config_record,
+        cases,
+        summary,
+    }
+}
+
+/// Extract corpus id from the questions file path (filename stem).
+fn corpus_id_from_path(path: &str) -> String {
+    Path::new(path)
+        .file_stem()
+        .map_or_else(|| "unknown".to_owned(), |s| s.to_string_lossy().into_owned())
+}
+
+/// Extract the basename of the agent command (first whitespace-separated token).
+fn agent_basename(agent_cmd: &str) -> String {
+    let first_token = agent_cmd.split_whitespace().next().unwrap_or(agent_cmd);
+    Path::new(first_token)
+        .file_name()
+        .map_or_else(|| first_token.to_owned(), |s| s.to_string_lossy().into_owned())
+}
+
+/// Write a `RunRecord` to the structured archive path (atomic: temp → rename).
+///
+/// Path: `<results_dir>/<agent>/<server>/<corpus_id>/<run_id>.json`.
+/// Refuses to overwrite an existing file (FR4).
+///
+/// # Errors
+///
+/// Returns an error if directory creation, file write, or rename fails, or if
+/// the target archive file already exists.
+fn write_run_record(config: &RunConfig, record: &RunRecord) -> Result<()> {
+    let dir = Path::new(&config.results_dir)
+        .join(&record.agent)
+        .join(&record.server.name)
+        .join(&record.corpus_id);
+
+    std::fs::create_dir_all(&dir)
+        .with_context(|| format!("failed to create archive directory: {}", dir.display()))?;
+
+    let target = dir.join(format!("{}.json", record.run_id));
+    if target.exists() {
+        // Never overwrite an existing run (FR4 / AC2).
+        return Err(anyhow::anyhow!(
+            "run archive file already exists (refusing to overwrite): {}",
+            target.display()
+        ));
+    }
+
+    let tmp_path = dir.join(format!("{}.json.tmp", record.run_id));
+    let json =
+        serde_json::to_string_pretty(record).context("failed to serialize RunRecord")?;
+
+    std::fs::write(&tmp_path, &json)
+        .with_context(|| format!("failed to write tmp archive: {}", tmp_path.display()))?;
+
+    std::fs::rename(&tmp_path, &target)
+        .with_context(|| format!("failed to rename archive file to {}", target.display()))?;
+
+    Ok(())
 }
 
 fn evaluate_question(q: &Question, config: &RunConfig) -> Result<QuestionResult> {
@@ -254,7 +454,7 @@ mod tests {
     fn parse_agent_output_plain_string() {
         let (ans, conf, pillars) = parse_agent_output("42.0\n");
         assert_eq!(ans, Some("42.0".to_owned()));
-        assert_eq!(conf, 0.0);
+        assert!(conf.abs() < f64::EPSILON);
         assert!(pillars.is_empty());
     }
 

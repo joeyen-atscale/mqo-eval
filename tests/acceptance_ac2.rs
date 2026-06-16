@@ -11,7 +11,13 @@
 //! the panic stub with a real assertion that verifies the AC
 //! description above.
 
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::doc_markdown)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::doc_markdown,
+    clippy::uninlined_format_args,
+    clippy::indexing_slicing,
+)]
 
 use mqo_eval::{
     run::{run, OutputFormat, RunConfig},
@@ -70,6 +76,9 @@ fn acceptance_ac2() {
             pg_pass_env: "ATSCALE_PG_PASS".to_owned(),
             out_path: out.to_string_lossy().into_owned(),
             format: OutputFormat::Text,
+            results_dir: tmp.path().join("results").to_string_lossy().into_owned(),
+            catalog: None,
+            max_result_rows: 1000,
         };
         let results = run(&cfg).unwrap();
         assert_eq!(results[0].verdict, Verdict::Correct, "exact-match answer should be correct");
@@ -89,6 +98,9 @@ fn acceptance_ac2() {
             pg_pass_env: "ATSCALE_PG_PASS".to_owned(),
             out_path: out.to_string_lossy().into_owned(),
             format: OutputFormat::Text,
+            results_dir: tmp.path().join("results").to_string_lossy().into_owned(),
+            catalog: None,
+            max_result_rows: 1000,
         };
         let results = run(&cfg).unwrap();
         assert_eq!(results[0].verdict, Verdict::Wrong, "mismatched answer should be wrong");
@@ -108,6 +120,9 @@ fn acceptance_ac2() {
             pg_pass_env: "ATSCALE_PG_PASS".to_owned(),
             out_path: out.to_string_lossy().into_owned(),
             format: OutputFormat::Text,
+            results_dir: tmp.path().join("results").to_string_lossy().into_owned(),
+            catalog: None,
+            max_result_rows: 1000,
         };
         let results = run(&cfg).unwrap();
         assert_eq!(results[0].verdict, Verdict::NoBind, "empty agent output should be no_bind");
