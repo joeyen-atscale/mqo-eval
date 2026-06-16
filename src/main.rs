@@ -93,21 +93,6 @@ enum Command {
         format: String,
     },
 
-    /// Render a run record as a markdown summary report.
-    Report {
-        /// Whether to render as markdown (currently the only format).
-        #[arg(long)]
-        markdown: bool,
-
-        /// Path to the run record JSON file (RunRecord shape).
-        #[arg(long, value_name = "FILE")]
-        run: String,
-
-        /// Output file path (stdout when omitted).
-        #[arg(long, value_name = "FILE")]
-        out: Option<String>,
-    },
-
     /// Report verdict flips between two result runs.
     Compare {
         /// First results file.
@@ -123,17 +108,21 @@ enum Command {
         format: String,
     },
 
-    /// Render a run record as an HTML report.
+    /// Render a run record as a report (HTML or markdown).
     Report {
-        /// Render as self-contained HTML.
+        /// Render as self-contained HTML (default when neither flag is given).
         #[arg(long)]
         html: bool,
+
+        /// Render as a markdown summary instead of HTML.
+        #[arg(long)]
+        markdown: bool,
 
         /// Path to the RunRecord JSON file produced by `run`.
         #[arg(long, value_name = "FILE")]
         run: String,
 
-        /// Output path for the HTML file (stdout if omitted).
+        /// Output path (stdout if omitted).
         #[arg(long, value_name = "FILE")]
         out: Option<String>,
     },
@@ -213,28 +202,6 @@ fn run_main() -> anyhow::Result<()> {
             }
         }
 
-        Command::Report { markdown, run: run_path, out } => {
-            if !markdown {
-                anyhow::bail!("--markdown flag is required (it is currently the only report format)");
-            }
-            let json_str = std::fs::read_to_string(&run_path)
-                .map_err(|e| anyhow::anyhow!("cannot read {run_path}: {e}"))?;
-            // Shape-detect: if the top-level JSON has a "cases" key it is a
-            // RunRecord; otherwise we don't support the legacy flat format here.
-            let record: RunRecord = serde_json::from_str(&json_str)
-                .map_err(|e| anyhow::anyhow!("cannot parse RunRecord from {run_path}: {e}"))?;
-            let md = report::markdown::render(&record);
-            match out {
-                Some(path) => {
-                    std::fs::write(&path, &md)
-                        .map_err(|e| anyhow::anyhow!("cannot write {path}: {e}"))?;
-                }
-                None => {
-                    print!("{md}");
-                }
-            }
-        }
-
         Command::Compare { a, b, format } => {
             let flips = compare::compare_files(&a, &b)?;
             let fmt = format
@@ -249,14 +216,16 @@ fn run_main() -> anyhow::Result<()> {
             }
         }
 
-        Command::Report { html, run: run_path, out } => {
-            if !html {
-                anyhow::bail!("--html is required (it is the only supported format)");
-            }
+        Command::Report { html, markdown, run: run_path, out } => {
             let content = std::fs::read_to_string(&run_path)
                 .map_err(|e| anyhow::anyhow!("cannot read {run_path}: {e}"))?;
             let record = load_run_record(&content)?;
-            let rendered = report::html::render(&record);
+            // Default to HTML; `--markdown` selects the markdown summary.
+            let rendered = if markdown && !html {
+                report::markdown::render(&record)
+            } else {
+                report::html::render(&record)
+            };
             match out {
                 Some(path) => {
                     std::fs::write(&path, &rendered)
