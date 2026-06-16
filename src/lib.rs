@@ -9,6 +9,7 @@
 pub mod compare;
 pub mod oracle;
 pub mod pgwire;
+pub mod report;
 pub mod run;
 pub mod summary;
 pub mod types;

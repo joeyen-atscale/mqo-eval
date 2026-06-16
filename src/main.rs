@@ -11,9 +11,10 @@ use std::process::ExitCode;
 use mqo_eval::{
     compare,
     pgwire::{DEFAULT_CATALOG_NAME, DEFAULT_MODEL_NAME, HARD_ROW_CEIL},
+    report,
     run::{run, OutputFormat, RunConfig},
     summary,
-    types::OracleMode,
+    types::{OracleMode, RunRecord},
 };
 
 #[derive(Debug, Parser)]
@@ -106,6 +107,21 @@ enum Command {
         #[arg(long, default_value = "text", value_name = "FORMAT")]
         format: String,
     },
+
+    /// Render a run record as an HTML report.
+    Report {
+        /// Render as self-contained HTML.
+        #[arg(long)]
+        html: bool,
+
+        /// Path to the RunRecord JSON file produced by `run`.
+        #[arg(long, value_name = "FILE")]
+        run: String,
+
+        /// Output path for the HTML file (stdout if omitted).
+        #[arg(long, value_name = "FILE")]
+        out: Option<String>,
+    },
 }
 
 fn main() -> ExitCode {
@@ -195,7 +211,104 @@ fn run_main() -> anyhow::Result<()> {
                 }
             }
         }
+
+        Command::Report { html, run: run_path, out } => {
+            if !html {
+                anyhow::bail!("--html is required (it is the only supported format)");
+            }
+            let content = std::fs::read_to_string(&run_path)
+                .map_err(|e| anyhow::anyhow!("cannot read {run_path}: {e}"))?;
+            let record = load_run_record(&content)?;
+            let rendered = report::html::render(&record);
+            match out {
+                Some(path) => {
+                    std::fs::write(&path, &rendered)
+                        .map_err(|e| anyhow::anyhow!("cannot write {path}: {e}"))?;
+                    eprintln!("report written to {path}");
+                }
+                None => {
+                    print!("{rendered}");
+                }
+            }
+        }
     }
 
     Ok(())
+}
+
+/// Load a [`RunRecord`] from JSON, accepting both the canonical `RunRecord`
+/// shape (has `"cases"` field) and a legacy flat array of [`QuestionResult`].
+fn load_run_record(json: &str) -> anyhow::Result<RunRecord> {
+    // Try the canonical RunRecord shape first.
+    if let Ok(record) = serde_json::from_str::<RunRecord>(json) {
+        return Ok(record);
+    }
+    // Fall back: wrap a legacy flat array into a minimal RunRecord.
+    use mqo_eval::types::{CaseRecord, QuestionResult, RunConfigRecord, ServerInfo, SummaryStats, Verdict};
+    let flat: Vec<QuestionResult> = serde_json::from_str(json)
+        .map_err(|e| anyhow::anyhow!("cannot parse as RunRecord or legacy flat array: {e}"))?;
+
+    let total = flat.len();
+    let correct = flat.iter().filter(|q| q.verdict == Verdict::Correct).count();
+    let wrong = flat.iter().filter(|q| q.verdict == Verdict::Wrong).count();
+    let no_bind = flat.iter().filter(|q| q.verdict == Verdict::NoBind).count();
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    let accuracy = if total == 0 { 0.0 } else { correct as f64 / total as f64 };
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    let no_bind_rate = if total == 0 { 0.0 } else { no_bind as f64 / total as f64 };
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    let mean_confidence = if flat.is_empty() {
+        0.0
+    } else {
+        flat.iter().map(|q| q.confidence).sum::<f64>() / flat.len() as f64
+    };
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    let mean_latency_ms = if flat.is_empty() {
+        0.0
+    } else {
+        flat.iter().map(|q| q.latency_ms as f64).sum::<f64>() / flat.len() as f64
+    };
+
+    let cases = flat
+        .into_iter()
+        .map(|q| CaseRecord {
+            id: q.id,
+            verdict: q.verdict,
+            latency_ms: q.latency_ms,
+            row_recall: None,
+            column_recall: None,
+            jaccard: None,
+            rep_verdicts: None,
+            detail: None,
+        })
+        .collect();
+
+    Ok(RunRecord {
+        run_id: "legacy".to_owned(),
+        started_at: String::new(),
+        finished_at: String::new(),
+        agent: "unknown".to_owned(),
+        server: ServerInfo { name: "unknown".to_owned(), mqo_mcp_version: None },
+        corpus_id: "legacy".to_owned(),
+        config: RunConfigRecord {
+            repeat: 1,
+            min_pass_reps: 1,
+            pass_threshold: 1.0,
+            catalog: None,
+            model: "unknown".to_owned(),
+            oracle_mode: "unknown".to_owned(),
+            max_result_rows: 1000,
+        },
+        cases,
+        summary: SummaryStats {
+            accuracy,
+            no_bind_rate,
+            mean_confidence,
+            mean_latency_ms,
+            total,
+            correct,
+            wrong,
+            no_bind,
+        },
+    })
 }
