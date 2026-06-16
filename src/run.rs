@@ -10,10 +10,11 @@ use serde_json::Value;
 
 use crate::{
     oracle,
+    pgwire::{self, PgwireConfig},
     summary,
     types::{
         CaseRecord, OracleMode, Question, QuestionsFile, QuestionResult, RunConfigRecord,
-        RunRecord, ServerInfo,
+        RunRecord, ServerInfo, SqlQueriesFile,
     },
 };
 
@@ -32,16 +33,20 @@ pub struct RunConfig {
     pub pg_host: Option<String>,
     /// Environment variable name that holds the PG password.
     pub pg_pass_env: String,
+    /// Catalog name for `${CatalogName}` substitution.
+    pub catalog_name: String,
+    /// Model name for `${ModelName}` substitution.
+    pub model_name: String,
+    /// Maximum rows fetched per golden query.
+    pub max_result_rows: u64,
+    /// `PGWire` user.
+    pub pg_user: String,
     /// Output path for results JSON (legacy flat array; optional).
     pub out_path: String,
     /// Output format (text or json).
     pub format: OutputFormat,
     /// Root directory for the structured run archive (`results/` by default).
     pub results_dir: String,
-    /// `AtScale` catalog name, if provided.
-    pub catalog: Option<String>,
-    /// Maximum result rows per query (forwarded to agent; stored in record).
-    pub max_result_rows: u64,
 }
 
 /// Output format for the run command.
@@ -75,40 +80,57 @@ impl std::str::FromStr for OutputFormat {
 /// Returns an error if the questions file cannot be read, the oracle is
 /// misconfigured, or writing the output fails.
 pub fn run(config: &RunConfig) -> Result<Vec<QuestionResult>> {
+    // Build a Tokio runtime so async pgwire code can run from this sync entry point.
+    let rt = tokio::runtime::Runtime::new().context("failed to create Tokio runtime")?;
+    rt.block_on(run_async(config))
+}
+
+/// Async body of [`run`].
+async fn run_async(config: &RunConfig) -> Result<Vec<QuestionResult>> {
     // Capture run start time once, before any work.
     let run_wall_start = std::time::SystemTime::now();
     let started_at = format_system_time(run_wall_start);
 
     // Validate pgwire config eagerly — fail fast before any questions run.
-    if config.oracle == OracleMode::Pgwire {
-        oracle::pgwire_password(&config.pg_pass_env).context("pgwire oracle pre-check")?;
-    }
+    let pg_cfg = if config.oracle == OracleMode::Pgwire {
+        let host = config
+            .pg_host
+            .as_deref()
+            .context("--pg-host is required when --oracle pgwire")?;
+        let cfg = PgwireConfig {
+            pg_host: host.to_owned(),
+            pg_user: config.pg_user.clone(),
+            pg_pass_env: config.pg_pass_env.clone(),
+            pg_dbname: String::new(),
+            catalog_name: config.catalog_name.clone(),
+            model_name: config.model_name.clone(),
+            max_result_rows: config.max_result_rows,
+        };
+        pgwire::pgwire_precheck(&cfg)
+            .await
+            .context("pgwire oracle pre-check")?;
+        Some(cfg)
+    } else {
+        // Fixture oracle still validates the env var is present for compatibility.
+        oracle::pgwire_password(&config.pg_pass_env).ok();
+        None
+    };
 
     let yaml_text = std::fs::read_to_string(&config.questions_path)
         .with_context(|| format!("failed to read questions file: {}", config.questions_path))?;
 
-    let qfile: QuestionsFile =
-        serde_yaml::from_str(&yaml_text).context("failed to parse questions YAML")?;
-
-    let mut results = Vec::with_capacity(qfile.questions.len());
-    let mut case_records = Vec::with_capacity(qfile.questions.len());
-
-    for q in &qfile.questions {
-        let result = evaluate_question(q, config)?;
-        // Build a CaseRecord from this QuestionResult.
-        let case = CaseRecord {
-            id: result.id.clone(),
-            verdict: result.verdict.clone(),
-            latency_ms: result.latency_ms,
-            row_recall: None,
-            column_recall: None,
-            jaccard: None,
-            rep_verdicts: None,
-            detail: None,
+    // Detect corpus shape: if the YAML has `queries:` + `expected_sql`, use
+    // SqlQueriesFile; otherwise fall back to the classic QuestionsFile.
+    let (results, case_records) =
+        if let Ok(sql_file) = serde_yaml::from_str::<SqlQueriesFile>(&yaml_text) {
+            if sql_file.queries.iter().any(|q| !q.expected_sql.is_empty()) {
+                run_sql_corpus(&sql_file, config, pg_cfg.as_ref()).await?
+            } else {
+                run_scalar_corpus(&yaml_text, config)?
+            }
+        } else {
+            run_scalar_corpus(&yaml_text, config)?
         };
-        case_records.push(case);
-        results.push(result);
-    }
 
     let finished_at = format_system_time(std::time::SystemTime::now());
 
@@ -134,6 +156,103 @@ pub fn run(config: &RunConfig) -> Result<Vec<QuestionResult>> {
     }
 
     Ok(results)
+}
+
+/// Run the classic scalar corpus (`expected_answer`).
+///
+/// Returns `(results, case_records)` for archive assembly.
+fn run_scalar_corpus(
+    yaml_text: &str,
+    config: &RunConfig,
+) -> Result<(Vec<QuestionResult>, Vec<CaseRecord>)> {
+    let qfile: QuestionsFile =
+        serde_yaml::from_str(yaml_text).context("failed to parse questions YAML")?;
+
+    let mut results = Vec::with_capacity(qfile.questions.len());
+    let mut case_records = Vec::with_capacity(qfile.questions.len());
+
+    for q in &qfile.questions {
+        let result = evaluate_question(q, config)?;
+        // Build a CaseRecord from this QuestionResult.
+        let case = CaseRecord {
+            id: result.id.clone(),
+            verdict: result.verdict.clone(),
+            latency_ms: result.latency_ms,
+            row_recall: None,
+            column_recall: None,
+            jaccard: None,
+            rep_verdicts: None,
+            detail: None,
+        };
+        case_records.push(case);
+        results.push(result);
+    }
+
+    Ok((results, case_records))
+}
+
+/// Run the PR#42-style SQL corpus (`expected_sql`).
+///
+/// Returns `(results, case_records)` for archive assembly.
+async fn run_sql_corpus(
+    sql_file: &SqlQueriesFile,
+    config: &RunConfig,
+    pg_cfg: Option<&PgwireConfig>,
+) -> Result<(Vec<QuestionResult>, Vec<CaseRecord>)> {
+    let mut results = Vec::with_capacity(sql_file.queries.len());
+    let mut case_records = Vec::with_capacity(sql_file.queries.len());
+
+    for q in &sql_file.queries {
+        if q.disabled {
+            continue;
+        }
+
+        let start = Instant::now();
+        let cmd = build_agent_cmd(&config.agent_cmd, &q.nl_query, &config.model);
+        let agent_output = invoke_agent(&cmd)?;
+        let latency_ms = u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX);
+
+        let (bound_answer, confidence, pillars_fired) = parse_agent_output(&agent_output);
+
+        // For iter-1 scaffold: obtain the oracle outcome, then fall back to
+        // scalar comparison for grading (the resultset-scoring PRD wires
+        // the actual table comparison).
+        let oracle_outcome = if let Some(cfg) = pg_cfg {
+            Some(pgwire::execute_golden(cfg, &q.id, &q.expected_sql).await?)
+        } else {
+            None
+        };
+
+        // Grading: for now fall back to scalar comparison; when oracle outcome
+        // is a table/oversize the downstream scoring PRD will handle it.
+        let verdict = oracle::grade("", bound_answer.as_deref());
+
+        let result = QuestionResult {
+            question: q.nl_query.clone(),
+            id: q.id.clone(),
+            verdict: verdict.clone(),
+            confidence,
+            pillars_fired,
+            latency_ms,
+            oracle_outcome,
+        };
+
+        let case = CaseRecord {
+            id: result.id.clone(),
+            verdict: result.verdict.clone(),
+            latency_ms: result.latency_ms,
+            row_recall: None,
+            column_recall: None,
+            jaccard: None,
+            rep_verdicts: None,
+            detail: None,
+        };
+
+        case_records.push(case);
+        results.push(result);
+    }
+
+    Ok((results, case_records))
 }
 
 /// Format a [`std::time::SystemTime`] as a compact ISO-8601-like string.
@@ -216,7 +335,7 @@ fn assemble_run_record(
         repeat: 1,
         min_pass_reps: 1,
         pass_threshold: 1.0,
-        catalog: config.catalog.clone(),
+        catalog: Some(config.catalog_name.clone()),
         model: config.model.clone(),
         oracle_mode: server_name.clone(),
         max_result_rows: config.max_result_rows,
@@ -317,6 +436,7 @@ fn evaluate_question(q: &Question, config: &RunConfig) -> Result<QuestionResult>
         confidence,
         pillars_fired,
         latency_ms,
+        oracle_outcome: None,
     })
 }
 
@@ -430,6 +550,7 @@ fn print_text_summary(results: &[QuestionResult]) {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 

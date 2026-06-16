@@ -36,6 +36,7 @@ fn make_result(id: &str, verdict: Verdict) -> QuestionResult {
         confidence: 0.5,
         pillars_fired: vec![],
         latency_ms: 10,
+        oracle_outcome: None,
     }
 }
 

@@ -10,6 +10,7 @@ use std::process::ExitCode;
 
 use mqo_eval::{
     compare,
+    pgwire::{DEFAULT_CATALOG_NAME, DEFAULT_MODEL_NAME, HARD_ROW_CEIL},
     run::{run, OutputFormat, RunConfig},
     summary,
     types::OracleMode,
@@ -23,6 +24,7 @@ struct Cli {
 }
 
 #[derive(Debug, Subcommand)]
+#[allow(clippy::large_enum_variant)]
 enum Command {
     /// Drive questions through the binder and grade results.
     Run {
@@ -50,6 +52,22 @@ enum Command {
         #[arg(long, default_value = "ATSCALE_PG_PASS", value_name = "ENV_VAR")]
         pg_pass_env: String,
 
+        /// Catalog name substituted for `${CatalogName}` in `expected_sql`.
+        #[arg(long, default_value_t = DEFAULT_CATALOG_NAME.to_owned(), value_name = "CATALOG")]
+        catalog_name: String,
+
+        /// Model name substituted for `${ModelName}` in `expected_sql`.
+        #[arg(long, default_value_t = DEFAULT_MODEL_NAME.to_owned(), value_name = "MODEL")]
+        model_name: String,
+
+        /// Maximum rows fetched per golden query (hard ceil 200000).
+        #[arg(long, default_value_t = 50_000_u64, value_name = "N")]
+        max_result_rows: u64,
+
+        /// `PGWire` user (defaults to `atscale`).
+        #[arg(long, default_value = "atscale", value_name = "USER")]
+        pg_user: String,
+
         /// Path to write the legacy flat results JSON file.
         #[arg(long, default_value = "results.json", value_name = "FILE")]
         out: String,
@@ -61,14 +79,6 @@ enum Command {
         /// Root directory for the structured run archive.
         #[arg(long, default_value = "results", value_name = "DIR")]
         results_dir: String,
-
-        /// `AtScale` catalog name (forwarded to agent; stored in run record).
-        #[arg(long, value_name = "CATALOG")]
-        catalog: Option<String>,
-
-        /// Maximum result rows per query (stored in run record).
-        #[arg(long, default_value = "1000", value_name = "N")]
-        max_result_rows: u64,
     },
 
     /// Print aggregate statistics from a results file.
@@ -120,11 +130,13 @@ fn run_main() -> anyhow::Result<()> {
             oracle,
             pg_host,
             pg_pass_env,
+            catalog_name,
+            model_name,
+            max_result_rows,
+            pg_user,
             out,
             format,
             results_dir,
-            catalog,
-            max_result_rows,
         } => {
             let oracle_mode = oracle
                 .parse::<OracleMode>()
@@ -133,6 +145,9 @@ fn run_main() -> anyhow::Result<()> {
                 .parse::<OutputFormat>()
                 .map_err(|e| anyhow::anyhow!("{e}"))?;
 
+            // Clamp max_result_rows to the hard ceiling.
+            let max_result_rows = max_result_rows.min(HARD_ROW_CEIL);
+
             let config = RunConfig {
                 questions_path: questions,
                 model,
@@ -140,11 +155,13 @@ fn run_main() -> anyhow::Result<()> {
                 oracle: oracle_mode,
                 pg_host,
                 pg_pass_env,
+                catalog_name,
+                model_name,
+                max_result_rows,
+                pg_user,
                 out_path: out,
                 format: fmt,
                 results_dir,
-                catalog,
-                max_result_rows,
             };
 
             let results = run(&config)?;

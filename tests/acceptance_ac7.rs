@@ -28,6 +28,7 @@ fn acceptance_ac7() {
         confidence: 0.9,
         pillars_fired: vec![],
         latency_ms: 50,
+        oracle_outcome: None,
     }];
 
     let stats = summarize(&results);

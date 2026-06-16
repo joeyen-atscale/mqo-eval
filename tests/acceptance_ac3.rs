@@ -61,11 +61,13 @@ fn acceptance_ac3() {
         oracle: OracleMode::Fixture,
         pg_host: None,
         pg_pass_env: "ATSCALE_PG_PASS".to_owned(),
+        catalog_name: "atscale_catalogs".to_owned(),
+        model_name: "tpcds_benchmark_model".to_owned(),
+        max_result_rows: 50_000,
+        pg_user: "atscale".to_owned(),
         out_path: out.to_string_lossy().into_owned(),
         format: OutputFormat::Text,
         results_dir: tmp.path().join("results").to_string_lossy().into_owned(),
-        catalog: None,
-        max_result_rows: 1000,
     };
 
     let results = run(&cfg).expect("stub binder should work without real mqo-agent");
