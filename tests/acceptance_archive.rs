@@ -216,6 +216,7 @@ fn summarize_file_accepts_legacy_flat_array() {
             confidence: 0.9,
             pillars_fired: vec![],
             latency_ms: 50,
+            oracle_outcome: None,
         },
         QuestionResult {
             question: "Q2".to_owned(),
@@ -224,6 +225,7 @@ fn summarize_file_accepts_legacy_flat_array() {
             confidence: 0.3,
             pillars_fired: vec![],
             latency_ms: 30,
+            oracle_outcome: None,
         },
     ];
 
@@ -256,11 +258,13 @@ fn archive_file_at_expected_path() {
         oracle: OracleMode::Fixture,
         pg_host: None,
         pg_pass_env: "ATSCALE_PG_PASS".to_owned(),
+        catalog_name: "atscale_catalogs".to_owned(),
+        model_name: "tpcds_benchmark_model".to_owned(),
+        max_result_rows: 50_000,
+        pg_user: "atscale".to_owned(),
         out_path: out_path.to_string_lossy().into_owned(),
         format: OutputFormat::Text,
         results_dir: results_dir.to_string_lossy().into_owned(),
-        catalog: None,
-        max_result_rows: 1000,
     };
 
     run(&cfg).expect("run should succeed");
@@ -314,11 +318,13 @@ fn two_runs_produce_two_archive_files() {
         oracle: OracleMode::Fixture,
         pg_host: None,
         pg_pass_env: "ATSCALE_PG_PASS".to_owned(),
+        catalog_name: "atscale_catalogs".to_owned(),
+        model_name: "tpcds_benchmark_model".to_owned(),
+        max_result_rows: 50_000,
+        pg_user: "atscale".to_owned(),
         out_path: tmp.path().join("flat1.json").to_string_lossy().into_owned(),
         format: OutputFormat::Text,
         results_dir: results_dir.to_string_lossy().into_owned(),
-        catalog: None,
-        max_result_rows: 1000,
     };
     run(&cfg1).expect("run 1 should succeed");
 
@@ -333,11 +339,13 @@ fn two_runs_produce_two_archive_files() {
         oracle: OracleMode::Fixture,
         pg_host: None,
         pg_pass_env: "ATSCALE_PG_PASS".to_owned(),
+        catalog_name: "atscale_catalogs".to_owned(),
+        model_name: "tpcds_benchmark_model".to_owned(),
+        max_result_rows: 50_000,
+        pg_user: "atscale".to_owned(),
         out_path: tmp.path().join("flat2.json").to_string_lossy().into_owned(),
         format: OutputFormat::Text,
         results_dir: results_dir.to_string_lossy().into_owned(),
-        catalog: None,
-        max_result_rows: 1000,
     };
     run(&cfg2).expect("run 2 should succeed");
 

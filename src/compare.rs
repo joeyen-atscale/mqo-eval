@@ -61,6 +61,7 @@ pub fn print_text(flips: &[VerdictFlip]) {
 }
 
 #[cfg(test)]
+#[allow(clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::types::{QuestionResult, Verdict};
@@ -73,6 +74,7 @@ mod tests {
             confidence: 0.5,
             pillars_fired: vec![],
             latency_ms: 10,
+            oracle_outcome: None,
         }
     }
 

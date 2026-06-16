@@ -120,6 +120,7 @@ pub fn print_text(stats: &SummaryStats) {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
     use crate::types::QuestionResult;
@@ -132,6 +133,7 @@ mod tests {
             confidence,
             pillars_fired: vec![],
             latency_ms,
+            oracle_outcome: None,
         }
     }
 

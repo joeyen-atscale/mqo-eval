@@ -150,6 +150,9 @@ pub struct QuestionResult {
     pub pillars_fired: Vec<String>,
     /// Wall-clock latency in milliseconds.
     pub latency_ms: u64,
+    /// Oracle outcome when the `PGWire` oracle is in use (None for fixture oracle).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oracle_outcome: Option<OracleOutcome>,
 }
 
 /// Summary statistics compatible with mcp-eval output format.
@@ -184,6 +187,79 @@ pub struct VerdictFlip {
     pub verdict_a: Verdict,
     /// Verdict in run B.
     pub verdict_b: Verdict,
+}
+
+/// A typed cell value from a result table.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value", rename_all = "snake_case")]
+pub enum Cell {
+    /// SQL NULL.
+    Null,
+    /// Integer value (INT2/INT4/INT8).
+    Integer(i64),
+    /// Floating-point value (FLOAT4/FLOAT8/NUMERIC).
+    Float(f64),
+    /// Text value (everything else).
+    Text(String),
+}
+
+/// A materialized result table (columns + typed rows).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResultTable {
+    /// Ordered column names as reported by `PGWire`.
+    pub columns: Vec<String>,
+    /// Typed rows in the order returned by the server.
+    pub rows: Vec<Vec<Cell>>,
+}
+
+/// Oracle outcome for a single case.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum OracleOutcome {
+    /// A full result table (≤ cap rows).
+    Table(ResultTable),
+    /// Result would exceed the row cap; only a lower-bound count is known.
+    Oversize {
+        /// Observed row count at the point we stopped (≥ cap + 1).
+        observed_at_least: u64,
+        /// The configured cap that was exceeded.
+        cap: u64,
+    },
+    /// A per-case SQL or connection error; the run continues.
+    OracleError {
+        /// Case identifier.
+        case_id: String,
+        /// Human-readable error message (no credentials).
+        message: String,
+    },
+    /// Zero rows returned; columns are known (distinct from error).
+    Empty,
+}
+
+/// PR#42-style corpus query entry (`expected_sql` variant).
+#[derive(Debug, Clone, Deserialize)]
+pub struct SqlQuery {
+    /// Unique query identifier.
+    pub id: String,
+    /// Natural-language question text.
+    pub nl_query: String,
+    /// Reference SQL to execute against the live model.
+    pub expected_sql: String,
+    /// When true the case is skipped.
+    #[serde(default)]
+    pub disabled: bool,
+    /// Attribute sets that may be used interchangeably (for downstream scoring).
+    #[serde(default)]
+    pub equivalent_attributes: Vec<Vec<String>>,
+}
+
+/// PR#42-style corpus file.
+#[derive(Debug, Deserialize)]
+pub struct SqlQueriesFile {
+    /// Optional free-form context note.
+    pub context: Option<String>,
+    /// The list of queries.
+    pub queries: Vec<SqlQuery>,
 }
 
 /// Which oracle mode to use for grading.

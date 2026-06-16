@@ -26,6 +26,7 @@ fn make_result(id: &str, verdict: Verdict, confidence: f64, latency_ms: u64) -> 
         confidence,
         pillars_fired: vec![],
         latency_ms,
+        oracle_outcome: None,
     }
 }
 
