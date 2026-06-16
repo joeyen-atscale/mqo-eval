@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.0 — 2026-06-16
+
+markdown-summary: CommonMark SUMMARY.md-style markdown run report
+
 ## v0.4.0 — 2026-06-16
 
 html-report: HTML run report renderer (pass-rate banner, per-case checklist, metric badges)
