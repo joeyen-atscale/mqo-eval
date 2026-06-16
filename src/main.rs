@@ -24,6 +24,7 @@ struct Cli {
 }
 
 #[derive(Debug, Subcommand)]
+#[allow(clippy::large_enum_variant)]
 enum Command {
     /// Drive questions through the binder and grade results.
     Run {

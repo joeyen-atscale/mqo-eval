@@ -56,6 +56,7 @@ pub fn load_results_from_text(text: &str, source_label: &str) -> Result<Vec<Ques
                 confidence: 0.0,
                 pillars_fired: vec![],
                 latency_ms: c.latency_ms,
+                oracle_outcome: None,
             })
             .collect();
         Ok(results)
