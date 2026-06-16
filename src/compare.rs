@@ -20,7 +20,7 @@ pub fn compare_files(path_a: &str, path_b: &str) -> Result<Vec<VerdictFlip>> {
 fn load_results(path: &str) -> Result<Vec<QuestionResult>> {
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read results file: {path}"))?;
-    serde_json::from_str(&text).with_context(|| format!("failed to parse results JSON: {path}"))
+    crate::summary::load_results_from_text(&text, path)
 }
 
 /// Find verdict flips between two result sets (matched by question ID).
@@ -112,6 +112,8 @@ mod tests {
         let b = vec![make_result("q1", Verdict::Wrong)];
         let flips = find_flips(&a, &b);
         assert_eq!(flips.len(), 1);
-        assert_eq!(flips[0].id, "q1");
+        if let Some(flip) = flips.first() {
+            assert_eq!(flip.id, "q1");
+        }
     }
 }

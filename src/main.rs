@@ -50,13 +50,25 @@ enum Command {
         #[arg(long, default_value = "ATSCALE_PG_PASS", value_name = "ENV_VAR")]
         pg_pass_env: String,
 
-        /// Path to write the results JSON file.
+        /// Path to write the legacy flat results JSON file.
         #[arg(long, default_value = "results.json", value_name = "FILE")]
         out: String,
 
         /// Output format: `text` or `json`.
         #[arg(long, default_value = "text", value_name = "FORMAT")]
         format: String,
+
+        /// Root directory for the structured run archive.
+        #[arg(long, default_value = "results", value_name = "DIR")]
+        results_dir: String,
+
+        /// `AtScale` catalog name (forwarded to agent; stored in run record).
+        #[arg(long, value_name = "CATALOG")]
+        catalog: Option<String>,
+
+        /// Maximum result rows per query (stored in run record).
+        #[arg(long, default_value = "1000", value_name = "N")]
+        max_result_rows: u64,
     },
 
     /// Print aggregate statistics from a results file.
@@ -110,6 +122,9 @@ fn run_main() -> anyhow::Result<()> {
             pg_pass_env,
             out,
             format,
+            results_dir,
+            catalog,
+            max_result_rows,
         } => {
             let oracle_mode = oracle
                 .parse::<OracleMode>()
@@ -127,6 +142,9 @@ fn run_main() -> anyhow::Result<()> {
                 pg_pass_env,
                 out_path: out,
                 format: fmt,
+                results_dir,
+                catalog,
+                max_result_rows,
             };
 
             let results = run(&config)?;

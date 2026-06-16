@@ -11,7 +11,15 @@
 //! the panic stub with a real assertion that verifies the AC
 //! description above.
 
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::doc_markdown)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::doc_markdown,
+    clippy::useless_format,
+    clippy::uninlined_format_args,
+    clippy::items_after_statements,
+    clippy::indexing_slicing,
+)]
 
 use mqo_eval::{
     run::{run, OutputFormat, RunConfig},
@@ -81,6 +89,9 @@ fn acceptance_ac1() {
         pg_pass_env: "ATSCALE_PG_PASS".to_owned(),
         out_path: out_path.to_string_lossy().into_owned(),
         format: OutputFormat::Text,
+        results_dir: tmp.path().join("results").to_string_lossy().into_owned(),
+        catalog: None,
+        max_result_rows: 1000,
     };
 
     let results = run(&config).expect("run should succeed with fixture oracle offline");

@@ -2,6 +2,96 @@
 
 use serde::{Deserialize, Serialize};
 
+// ──────────────────────────────────────────────────────────────────────────────
+// RunRecord and friends (PRD-mqoeval-run-record-archive)
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Identity and version of the MQO server that served the run.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServerInfo {
+    /// Short label, e.g. `"pgwire"` or `"fixture"`.
+    pub name: String,
+    /// Version string reported by the MQO server, if available.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mqo_mcp_version: Option<String>,
+}
+
+/// Snapshot of all user-configurable knobs for a single run.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RunConfigRecord {
+    /// Number of repetitions per question (1 = single-shot).
+    pub repeat: u32,
+    /// Minimum passing repetitions required for `correct` verdict (repeat ≥ 2).
+    pub min_pass_reps: u32,
+    /// Score threshold for `correct` (fraction, 0.0–1.0).
+    pub pass_threshold: f64,
+    /// `AtScale` catalog name, if provided.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub catalog: Option<String>,
+    /// LLM model ID used by the agent.
+    pub model: String,
+    /// Oracle mode label (`"fixture"` or `"pgwire"`).
+    pub oracle_mode: String,
+    /// Maximum result rows returned per query.
+    pub max_result_rows: u64,
+}
+
+/// Per-case record inside a `RunRecord`.
+///
+/// Metric fields (`row_recall`, `column_recall`, `jaccard`) are `Option`
+/// because they are absent on scalar runs and populated only by
+/// handle-grading (PRD-mqoeval-handle-grading). They serialize as `null`
+/// when absent, not as `0`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CaseRecord {
+    /// Question identifier.
+    pub id: String,
+    /// Final grading verdict.
+    pub verdict: Verdict,
+    /// Wall-clock latency of this case in milliseconds.
+    pub latency_ms: u64,
+    /// Fraction of expected result rows that were returned (handle-grading).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub row_recall: Option<f64>,
+    /// Fraction of expected result columns that were returned (handle-grading).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub column_recall: Option<f64>,
+    /// Jaccard similarity between returned and expected row sets (handle-grading).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jaccard: Option<f64>,
+    /// Per-repetition verdict list (populated when `repeat > 1`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rep_verdicts: Option<Vec<Verdict>>,
+    /// Optional free-form detail / error message.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+/// The canonical archive record written for every completed run.
+///
+/// Written to `results/<agent>/<server>/<corpus_id>/<run_id>.json`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RunRecord {
+    /// Unique, time-sortable run identifier (`<compact_ts>-<corpus8>`).
+    pub run_id: String,
+    /// ISO-8601 timestamp of run start.
+    pub started_at: String,
+    /// ISO-8601 timestamp of run completion.
+    pub finished_at: String,
+    /// Basename of the agent command binary.
+    pub agent: String,
+    /// MQO server identity and version.
+    pub server: ServerInfo,
+    /// Corpus identifier (filename stem of the questions file).
+    pub corpus_id: String,
+    /// Frozen snapshot of the run configuration.
+    pub config: RunConfigRecord,
+    /// Per-case results.
+    pub cases: Vec<CaseRecord>,
+    /// Aggregate summary statistics recomputed from `cases`.
+    pub summary: SummaryStats,
+}
+
 /// A single question entry from questions.yaml.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Question {
