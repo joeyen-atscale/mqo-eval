@@ -1,0 +1,7 @@
+{
+  "name": "scaffold-integrity",
+  "verdict": "pass",
+  "detail": "pybuilder scaffold applied; harness locked; agent edits src/ only",
+  "commit": "e32b30e",
+  "data": {}
+}

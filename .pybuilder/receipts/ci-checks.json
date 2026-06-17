@@ -1,0 +1,7 @@
+{
+  "name": "ci-checks",
+  "verdict": "pass",
+  "detail": "pytest 13/13; ruff clean; mypy strict clean; run-metrics valid JSON",
+  "commit": "e32b30e",
+  "data": {}
+}

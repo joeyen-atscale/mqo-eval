@@ -1,0 +1,7 @@
+{
+  "name": "proof",
+  "verdict": "pass",
+  "detail": "13/13 tests pass; ruff 0 errors; mypy 0 errors; run-metrics green",
+  "commit": "e32b30e",
+  "data": {}
+}

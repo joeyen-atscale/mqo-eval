@@ -1,0 +1,7 @@
+{
+  "name": "reviewer",
+  "verdict": "pass",
+  "detail": "AC text reviewed: all 8 MUST ACs have a paired passing test; AC-9 (SHOULD) passing",
+  "commit": "e32b30e",
+  "data": {}
+}

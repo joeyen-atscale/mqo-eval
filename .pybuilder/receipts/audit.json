@@ -1,0 +1,7 @@
+{
+  "name": "audit",
+  "verdict": "pass",
+  "detail": "pybuilder audit: 0 BAD_PYTHON hits across src/",
+  "commit": "e32b30e",
+  "data": {}
+}

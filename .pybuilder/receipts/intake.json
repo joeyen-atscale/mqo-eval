@@ -1,0 +1,7 @@
+{
+  "name": "intake",
+  "verdict": "pass",
+  "detail": "5-Whys intake complete; 8 MUST + 1 SHOULD ACs; no ambiguity",
+  "commit": "e32b30e",
+  "data": {}
+}
