@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.0 — claude-oauth-agent
+Headless Claude agent via OAuth subscription: no API key, no local model. Invokes claude -p --output-format json with mqo-mcp wired via --mcp-config, tools pre-approved via --allowedTools mcp__mqo__*. ANTHROPIC_API_KEY stripped from child env. 9 mocked tests.
+
+
 ## v0.6.0 — runner-integration
 Wires oracle.execute_golden + scoring.score_case into run_corpus; replaces the _verdict_from_answer stub. Adds k-of-n (--repeat/--min-pass-reps), --pass-threshold, --oracle pgwire path with PGWire precheck. Mean recall/Jaccard in summary. 12 new integration tests.
 
