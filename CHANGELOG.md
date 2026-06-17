@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.0 — handle-scoring
+Recall/Jaccard scoring engine: cell canonicalization, column normalization + equivalence groups, multiset row matching, scalar 1×1 fast-path, typed verdicts (correct/wrong/oversize/no_bind). 18 tests.
+
+
 ## v0.3.0 — api-free-agent
 OpenAI-compatible NL→query agent: session-holding MCP stdio transport, handle
 detection, turn cap, no-Anthropic-required; all 8 tests mocked.
