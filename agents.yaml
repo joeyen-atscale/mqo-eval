@@ -23,3 +23,9 @@ agents:
     capabilities:
       requires_api: false
       returns_handle: false
+  claude-oauth:
+    command: "python -m mqo_eval.agents.claude_oauth_agent"
+    kind: subprocess
+    capabilities:
+      requires_api: false
+      returns_handle: true
