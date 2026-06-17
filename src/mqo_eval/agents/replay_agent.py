@@ -37,7 +37,7 @@ class CassetteEntry:
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, str]) -> "CassetteEntry":
+    def from_dict(cls, d: dict[str, str]) -> CassetteEntry:
         if d.get("schema_version") != CASSETTE_SCHEMA_VERSION:
             raise ValueError(
                 f"incompatible cassette version {d.get('schema_version')!r}; "

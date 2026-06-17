@@ -33,6 +33,16 @@ def _cmd_run(args: argparse.Namespace) -> int:
         "model": args.model,
         "server": args.server,
         "corpus": str(args.corpus),
+        "oracle": args.oracle,
+        "pg_host": args.pg_host,
+        "pg_pass_env": args.pg_pass_env,
+        "catalog_name": args.catalog_name,
+        "model_name": args.model_name,
+        "pass_threshold": args.pass_threshold,
+        "repeat": args.repeat,
+        "min_pass_reps": (
+            args.min_pass_reps if args.min_pass_reps is not None else args.repeat
+        ),
     }
 
     if corpus.active:
@@ -85,6 +95,9 @@ def _cmd_summary(args: argparse.Namespace) -> int:
     recall = summary.get("mean_row_recall")
     if recall is not None:
         print(f"mean_recall: {recall:.3f}")
+    jaccard = summary.get("mean_row_jaccard")
+    if jaccard is not None:
+        print(f"mean_jaccard: {jaccard:.3f}")
     return 0
 
 
@@ -101,6 +114,50 @@ def _build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--server", default="fixture", help="server label")
     run_p.add_argument("--results-dir", default="results", help="archive root")
     run_p.add_argument("--agents-yaml", default="agents.yaml", help="registry file")
+    run_p.add_argument(
+        "--oracle",
+        choices=["fixture", "pgwire"],
+        default="fixture",
+        help="oracle backend: fixture (offline) or pgwire (live PGWire scoring)",
+    )
+    run_p.add_argument(
+        "--pg-host",
+        default="localhost",
+        help="PGWire host (only used with --oracle pgwire)",
+    )
+    run_p.add_argument(
+        "--pg-pass-env",
+        default="ATSCALE_PG_PASS",
+        help="env var name holding PGWire password",
+    )
+    run_p.add_argument(
+        "--catalog-name",
+        default="atscale_catalogs",
+        help="AtScale catalog name for SQL placeholder substitution",
+    )
+    run_p.add_argument(
+        "--model-name",
+        default="tpcds_benchmark_model",
+        help="AtScale model name for SQL placeholder substitution",
+    )
+    run_p.add_argument(
+        "--pass-threshold",
+        type=float,
+        default=0.95,
+        help="row-recall threshold for a correct verdict (default: 0.95)",
+    )
+    run_p.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="run each case this many times (k-of-n)",
+    )
+    run_p.add_argument(
+        "--min-pass-reps",
+        type=int,
+        default=None,
+        help="minimum correct reps required for overall correct (default: --repeat)",
+    )
 
     sum_p = sub.add_parser("summary", help="summarise a run record")
     sum_p.add_argument("--results", required=True, help="path to RunRecord JSON")
