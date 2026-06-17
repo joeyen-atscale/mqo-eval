@@ -1,6 +1,6 @@
 agents:
   stub:
-    command: "python -m mqo_eval.stub_agent"
+    command: "uv run python -m mqo_eval.stub_agent"
     kind: subprocess
     capabilities:
       requires_api: false
@@ -12,19 +12,19 @@ agents:
       requires_api: false
       returns_handle: false
   oai-agent:
-    command: "python -m mqo_eval.agents.oai_agent"
+    command: "uv run python -m mqo_eval.agents.oai_agent"
     kind: subprocess
     capabilities:
       requires_api: false   # false when using local model
       returns_handle: true
   replay:
-    command: "python -m mqo_eval.agents.replay_agent replay"
+    command: "uv run python -m mqo_eval.agents.replay_agent replay"
     kind: subprocess
     capabilities:
       requires_api: false
       returns_handle: false
   claude-oauth:
-    command: "python -m mqo_eval.agents.claude_oauth_agent"
+    command: "uv run python -m mqo_eval.agents.claude_oauth_agent"
     kind: subprocess
     capabilities:
       requires_api: false
