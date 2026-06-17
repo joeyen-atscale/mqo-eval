@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.0 — record-replay-agent
+Cassette agent: record mode wraps any delegate agent and saves AgentAnswer envelopes to JSONL; replay mode serves them back with zero API/model calls. Schema-versioned cassettes. CI gate: replay runs entire corpus deterministically.
+
+
 ## v0.4.0 — handle-scoring
 Recall/Jaccard scoring engine: cell canonicalization, column normalization + equivalence groups, multiset row matching, scalar 1×1 fast-path, typed verdicts (correct/wrong/oversize/no_bind). 18 tests.
 
