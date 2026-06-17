@@ -23,12 +23,13 @@ def _make_run_id(corpus_id: str) -> str:
 class CaseRecord:
     id: str
     nl_query: str
-    verdict: str  # "correct"|"wrong"|"no_bind"|"parse_error"|"skipped"
+    verdict: str  # "correct"|"wrong"|"no_bind"|"parse_error"|"skipped"|"oversize"
     answer_type: str | None = None
     detail: str | None = None
     row_recall: float | None = None
     column_recall: float | None = None
     jaccard: float | None = None
+    rep_verdicts: list[str] | None = None
     latency_ms: int = 0
 
 
@@ -42,6 +43,7 @@ class SummaryStats:
     no_bind: int
     parse_errors: int
     mean_row_recall: float | None = None
+    mean_row_jaccard: float | None = None
 
     @property
     def accuracy(self) -> float:
@@ -71,6 +73,7 @@ class RunRecord:
         no_bind = [c for c in active if c.verdict == "no_bind"]
         parse_err = [c for c in active if c.verdict == "parse_error"]
         recalls = [c.row_recall for c in active if c.row_recall is not None]
+        jaccards = [c.jaccard for c in active if c.jaccard is not None]
         self.summary = SummaryStats(
             total=len(self.cases),
             active=len(active),
@@ -80,6 +83,7 @@ class RunRecord:
             no_bind=len(no_bind),
             parse_errors=len(parse_err),
             mean_row_recall=sum(recalls) / len(recalls) if recalls else None,
+            mean_row_jaccard=sum(jaccards) / len(jaccards) if jaccards else None,
         )
 
     def to_dict(self) -> dict[str, Any]:
