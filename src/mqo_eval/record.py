@@ -26,7 +26,7 @@ ROW_SAMPLE_CAP = 10  # max rows stored in candidate/reference samples
 class CaseRecord:
     id: str
     nl_query: str
-    verdict: str  # "correct"|"wrong"|"no_bind"|"parse_error"|"skipped"|"oversize"
+    verdict: str  # "correct"|"wrong"|"no_bind"|"parse_error"|"skipped"|"skipped-stable"|"oversize"
     answer_type: str | None = None
     detail: str | None = None
     row_recall: float | None = None
@@ -43,6 +43,9 @@ class CaseRecord:
     row_count_candidate: Optional[int] = None
     row_count_reference: Optional[int] = None
     sample_truncated: Optional[bool] = None
+    # Selective-retest (PRD-mqoeval-selective-retest): set when a case is carried
+    # forward from a prior run instead of being tested this cycle.
+    carried_from_run_id: Optional[str] = None
 
 
 @dataclass
@@ -56,6 +59,11 @@ class SummaryStats:
     parse_errors: int
     mean_row_recall: float | None = None
     mean_row_jaccard: float | None = None
+    # Selective-retest counts (PRD-mqoeval-selective-retest)
+    # tested = cases actually run through the agent this cycle
+    # carried = cases whose prior correct verdict was carried forward (skipped-stable)
+    tested: int = 0
+    carried: int = 0
 
     @property
     def accuracy(self) -> float:
@@ -78,24 +86,33 @@ class RunRecord:
 
     def finalise(self, finished_at: str) -> None:
         self.finished_at = finished_at
+        # "skipped" = disabled cases; "skipped-stable" = carried-forward cases (active)
+        skipped_disabled = [c for c in self.cases if c.verdict == "skipped"]
+        carried = [c for c in self.cases if c.verdict == "skipped-stable"]
+        # active = all cases that are not disabled-skipped
         active = [c for c in self.cases if c.verdict != "skipped"]
-        skipped = [c for c in self.cases if c.verdict == "skipped"]
-        correct = [c for c in active if c.verdict == "correct"]
+        # correct includes carried-forward correct cases (honest accounting; R6)
+        correct = [c for c in active if c.verdict in ("correct", "skipped-stable")]
         wrong = [c for c in active if c.verdict == "wrong"]
         no_bind = [c for c in active if c.verdict == "no_bind"]
         parse_err = [c for c in active if c.verdict == "parse_error"]
-        recalls = [c.row_recall for c in active if c.row_recall is not None]
-        jaccards = [c.jaccard for c in active if c.jaccard is not None]
+        # Only compute recall/jaccard from actually-scored cases (not carried)
+        scored = [c for c in active if c.verdict not in ("skipped-stable",)]
+        recalls = [c.row_recall for c in scored if c.row_recall is not None]
+        jaccards = [c.jaccard for c in scored if c.jaccard is not None]
+        tested_count = len(active) - len(carried)
         self.summary = SummaryStats(
             total=len(self.cases),
             active=len(active),
-            skipped=len(skipped),
+            skipped=len(skipped_disabled),
             correct=len(correct),
             wrong=len(wrong),
             no_bind=len(no_bind),
             parse_errors=len(parse_err),
             mean_row_recall=sum(recalls) / len(recalls) if recalls else None,
             mean_row_jaccard=sum(jaccards) / len(jaccards) if jaccards else None,
+            tested=tested_count,
+            carried=len(carried),
         )
 
     def to_dict(self) -> dict[str, Any]:
