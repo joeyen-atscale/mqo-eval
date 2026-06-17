@@ -11,3 +11,9 @@ agents:
     capabilities:
       requires_api: false
       returns_handle: false
+  oai-agent:
+    command: "python -m mqo_eval.agents.oai_agent"
+    kind: subprocess
+    capabilities:
+      requires_api: false   # false when using local model
+      returns_handle: true
