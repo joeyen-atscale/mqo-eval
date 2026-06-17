@@ -333,3 +333,197 @@ def test_mean_recall_in_summary(tmp_path: Path) -> None:
         )
     assert record.summary.mean_row_recall is not None
     assert abs(record.summary.mean_row_recall - 0.9) < 1e-6
+
+
+# ── Diagnostic field tests (PRD-mqoeval-runrecord-diagnostics) ────────────────
+
+
+# 13 — column_recall is populated (not None) on a scored case
+def test_column_recall_populated_on_scored_case(tmp_path: Path) -> None:
+    """FR1: column_recall must be populated from scoring metrics, never hardcoded None."""
+    from mqo_eval.corpus import load_corpus
+    from mqo_eval.registry import AgentEntry
+    from mqo_eval.runner import run_corpus
+
+    ref = _make_ref_table(["col_a", "col_b"], [[1, 2], [3, 4]])
+    with (
+        patch("mqo_eval.runner.pgwire_precheck"),
+        patch("mqo_eval.runner.execute_golden", return_value=ref),
+        patch("mqo_eval.runner._invoke_agent",
+              return_value=_tabular_answer(["col_a", "col_b"], [[1, 2], [3, 4]])),
+    ):
+        corpus = load_corpus(CORPUS)
+        agent = AgentEntry(name="test", command="ignored")
+        record, _ = run_corpus(
+            corpus, agent, "m", "pgwire", tmp_path / "r",
+            {"oracle": "pgwire", "pg_host": "h", "pg_pass_env": "X",
+             "catalog_name": "c", "model_name": "m", "pass_threshold": 0.95, "repeat": 1},
+        )
+    active = [c for c in record.cases if c.verdict != "skipped"]
+    assert len(active) > 0
+    # Every scored case must have a numeric column_recall
+    for case in active:
+        assert case.column_recall is not None, (
+            f"Case {case.id} has column_recall=None; expected a numeric value"
+        )
+        assert isinstance(case.column_recall, float)
+
+
+# 14 — candidate/reference columns + row counts populated on correct answer
+def test_diagnostic_columns_populated(tmp_path: Path) -> None:
+    """FR2: candidate_columns, reference_columns, row counts must be stored."""
+    from mqo_eval.corpus import load_corpus
+    from mqo_eval.registry import AgentEntry
+    from mqo_eval.runner import run_corpus
+
+    ref = _make_ref_table(["store_id", "revenue"], [[1, 100.0], [2, 200.0]])
+    with (
+        patch("mqo_eval.runner.pgwire_precheck"),
+        patch("mqo_eval.runner.execute_golden", return_value=ref),
+        patch("mqo_eval.runner._invoke_agent",
+              return_value=_tabular_answer(["store_id", "revenue"], [[1, 100.0], [2, 200.0]])),
+    ):
+        corpus = load_corpus(CORPUS)
+        agent = AgentEntry(name="test", command="ignored")
+        record, _ = run_corpus(
+            corpus, agent, "m", "pgwire", tmp_path / "r",
+            {"oracle": "pgwire", "pg_host": "h", "pg_pass_env": "X",
+             "catalog_name": "c", "model_name": "m", "pass_threshold": 0.95, "repeat": 1},
+        )
+    active = [c for c in record.cases if c.verdict != "skipped"]
+    for case in active:
+        assert case.candidate_columns == ["store_id", "revenue"]
+        assert case.reference_columns == ["store_id", "revenue"]
+        assert case.row_count_candidate == 2
+        assert case.row_count_reference == 2
+
+
+# 15 — row sample capped at ROW_SAMPLE_CAP, sample_truncated=True for large results
+def test_row_sample_capped(tmp_path: Path) -> None:
+    """FR3/G3: row sample must be capped at ROW_SAMPLE_CAP; sample_truncated set True."""
+    from mqo_eval.corpus import load_corpus
+    from mqo_eval.record import ROW_SAMPLE_CAP
+    from mqo_eval.registry import AgentEntry
+    from mqo_eval.runner import run_corpus
+
+    large_rows = [[i] for i in range(ROW_SAMPLE_CAP + 5)]
+    ref = _make_ref_table(["n"], large_rows)
+    with (
+        patch("mqo_eval.runner.pgwire_precheck"),
+        patch("mqo_eval.runner.execute_golden", return_value=ref),
+        patch("mqo_eval.runner._invoke_agent",
+              return_value=_tabular_answer(["n"], large_rows)),
+    ):
+        corpus = load_corpus(CORPUS)
+        agent = AgentEntry(name="test", command="ignored")
+        record, _ = run_corpus(
+            corpus, agent, "m", "pgwire", tmp_path / "r",
+            {"oracle": "pgwire", "pg_host": "h", "pg_pass_env": "X",
+             "catalog_name": "c", "model_name": "m", "pass_threshold": 0.95, "repeat": 1},
+        )
+    active = [c for c in record.cases if c.verdict != "skipped"]
+    for case in active:
+        # sample must be bounded
+        if case.candidate_rows_sample is not None:
+            assert len(case.candidate_rows_sample) <= ROW_SAMPLE_CAP
+        if case.reference_rows_sample is not None:
+            assert len(case.reference_rows_sample) <= ROW_SAMPLE_CAP
+        # truncation flag must be set when rows exceed cap
+        assert case.row_count_candidate == ROW_SAMPLE_CAP + 5
+        assert case.row_count_reference == ROW_SAMPLE_CAP + 5
+        assert case.sample_truncated is True
+
+
+# 16 — wrong @ column mismatch carries column_recall < 1.0 and differing column lists
+def test_wrong_column_mismatch_diagnosable(tmp_path: Path) -> None:
+    """AC2: wrong@row_recall=1.0 case must show differing column lists in record."""
+    from mqo_eval.corpus import load_corpus
+    from mqo_eval.registry import AgentEntry
+    from mqo_eval.runner import run_corpus
+
+    # Reference has 2 cols; candidate only has 1 → column_recall = 0.5, verdict = wrong
+    ref = _make_ref_table(["col_a", "col_b"], [[1, 2]])
+    with (
+        patch("mqo_eval.runner.pgwire_precheck"),
+        patch("mqo_eval.runner.execute_golden", return_value=ref),
+        patch("mqo_eval.runner._invoke_agent",
+              return_value=_tabular_answer(["col_a"], [[1]])),
+    ):
+        corpus = load_corpus(CORPUS)
+        agent = AgentEntry(name="test", command="ignored")
+        record, _ = run_corpus(
+            corpus, agent, "m", "pgwire", tmp_path / "r",
+            {"oracle": "pgwire", "pg_host": "h", "pg_pass_env": "X",
+             "catalog_name": "c", "model_name": "m", "pass_threshold": 0.95, "repeat": 1},
+        )
+    wrong = [c for c in record.cases if c.verdict == "wrong"]
+    assert len(wrong) > 0
+    for case in wrong:
+        assert case.column_recall is not None
+        assert case.column_recall < 1.0
+        # Column lists differ — makes the failure diagnosable
+        assert case.candidate_columns is not None
+        assert case.reference_columns is not None
+        assert set(case.candidate_columns) != set(case.reference_columns)
+
+
+# 17 — column_jaccard also populated alongside column_recall
+def test_column_jaccard_populated(tmp_path: Path) -> None:
+    """FR4: column_jaccard persisted alongside column_recall."""
+    from mqo_eval.corpus import load_corpus
+    from mqo_eval.registry import AgentEntry
+    from mqo_eval.runner import run_corpus
+
+    ref = _make_ref_table(["col_a", "col_b"], [[1, 2]])
+    with (
+        patch("mqo_eval.runner.pgwire_precheck"),
+        patch("mqo_eval.runner.execute_golden", return_value=ref),
+        patch("mqo_eval.runner._invoke_agent",
+              return_value=_tabular_answer(["col_a", "col_b"], [[1, 2]])),
+    ):
+        corpus = load_corpus(CORPUS)
+        agent = AgentEntry(name="test", command="ignored")
+        record, _ = run_corpus(
+            corpus, agent, "m", "pgwire", tmp_path / "r",
+            {"oracle": "pgwire", "pg_host": "h", "pg_pass_env": "X",
+             "catalog_name": "c", "model_name": "m", "pass_threshold": 0.95, "repeat": 1},
+        )
+    active = [c for c in record.cases if c.verdict != "skipped"]
+    for case in active:
+        assert case.column_jaccard is not None
+        assert isinstance(case.column_jaccard, float)
+
+
+# 18 — diagnostic fields round-trip through JSON serialization
+def test_diagnostic_fields_json_serializable(tmp_path: Path) -> None:
+    """NFR2: CaseRecord with diagnostic fields must serialize to JSON without error."""
+    import json as _json
+    from mqo_eval.corpus import load_corpus
+    from mqo_eval.registry import AgentEntry
+    from mqo_eval.runner import run_corpus
+
+    ref = _make_ref_table(["x", "y"], [[1, "a"], [2, "b"], [3, "c"]])
+    with (
+        patch("mqo_eval.runner.pgwire_precheck"),
+        patch("mqo_eval.runner.execute_golden", return_value=ref),
+        patch("mqo_eval.runner._invoke_agent",
+              return_value=_tabular_answer(["x", "y"], [[1, "a"], [2, "b"]])),
+    ):
+        corpus = load_corpus(CORPUS)
+        agent = AgentEntry(name="test", command="ignored")
+        record, dest = run_corpus(
+            corpus, agent, "m", "pgwire", tmp_path / "r",
+            {"oracle": "pgwire", "pg_host": "h", "pg_pass_env": "X",
+             "catalog_name": "c", "model_name": "m", "pass_threshold": 0.95, "repeat": 1},
+        )
+    # The record file must exist and be valid JSON
+    assert dest.exists()
+    parsed = _json.loads(dest.read_text())
+    # Spot-check one active case has the new fields
+    active_cases = [c for c in parsed["cases"] if c["verdict"] != "skipped"]
+    assert len(active_cases) > 0
+    first = active_cases[0]
+    assert "column_recall" in first
+    assert first["column_recall"] is not None
+    assert "candidate_columns" in first
+    assert "reference_columns" in first
