@@ -58,6 +58,8 @@ class PgwireConfig:
     pg_port: int = 15432
     pg_user: str = "atscale"
     pg_pass_env: str = "ATSCALE_PG_PASS"  # env-var NAME, never the value
+    pg_dbname: str = "atscale_catalogs"  # AtScale reads dbname as the catalog
+    sslmode: str = "require"  # AtScale PGWire mandates TLS
     catalog_name: str = "atscale_catalogs"
     model_name: str = "tpcds_benchmark_model"
     max_result_rows: int = 50_000
@@ -142,6 +144,8 @@ def pgwire_precheck(cfg: PgwireConfig) -> None:
             host=cfg.pg_host,
             port=cfg.pg_port,
             user=cfg.pg_user,
+            dbname=cfg.pg_dbname,
+            sslmode=cfg.sslmode,
             password=password,
             connect_timeout=5,
         )
@@ -196,6 +200,8 @@ def execute_golden(
             host=cfg.pg_host,
             port=cfg.pg_port,
             user=cfg.pg_user,
+            dbname=cfg.pg_dbname,
+            sslmode=cfg.sslmode,
             password=password,
             connect_timeout=5,
             options=f"-c statement_timeout={cfg.query_timeout_s * 1000}",
@@ -255,6 +261,8 @@ class OracleSession:
             host=self.cfg.pg_host,
             port=self.cfg.pg_port,
             user=self.cfg.pg_user,
+            dbname=self.cfg.pg_dbname,
+            sslmode=self.cfg.sslmode,
             password=password,
             connect_timeout=5,
             options=f"-c statement_timeout={self.cfg.query_timeout_s * 1000}",
