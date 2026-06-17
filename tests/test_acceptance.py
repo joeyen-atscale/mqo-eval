@@ -154,3 +154,61 @@ def test_ac_9_summary_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) ->
         pass
     output = capsys.readouterr().out
     assert "/" in output  # pass rate N/M
+
+
+# ── Corpus equivalent_attributes + equivalent_values round-trip ───────────────
+
+
+def test_corpus_equivalent_attributes_loaded() -> None:
+    """equivalent_attributes from YAML are parsed into Query.equivalent_attributes."""
+    from mqo_eval.corpus import load_corpus
+    corpus = load_corpus(CORPUS)
+    # The 3 failing cases should have non-empty equivalent_attributes declared.
+    cases_with_equiv = {
+        q.id: q.equivalent_attributes
+        for q in corpus.queries
+        if q.equivalent_attributes
+    }
+    # At minimum the three recovering cases must have declarations.
+    assert "avg-sales-quantity-per-store" in cases_with_equiv, (
+        "avg-sales-quantity-per-store must have equivalent_attributes declared"
+    )
+    assert "total-net-profit-per-product" in cases_with_equiv, (
+        "total-net-profit-per-product must have equivalent_attributes declared"
+    )
+    assert "customers-ese-store-2001" in cases_with_equiv, (
+        "customers-ese-store-2001 must have equivalent_attributes declared"
+    )
+    # Each declared group must be a non-empty list-of-list.
+    for case_id, groups in cases_with_equiv.items():
+        assert isinstance(groups, list), f"{case_id}: equivalent_attributes must be a list"
+        for g in groups:
+            assert isinstance(g, list) and len(g) >= 2, (
+                f"{case_id}: each group must have ≥2 names"
+            )
+
+
+def test_corpus_equivalent_values_roundtrip(tmp_path: Path) -> None:
+    """equivalent_values from YAML are parsed into Query.equivalent_values."""
+    from mqo_eval.corpus import load_corpus
+    corpus_path = tmp_path / "test_ev.yaml"
+    # Use quoted strings to prevent YAML auto-parsing dates/timestamps.
+    corpus_path.write_text(
+        'context: ""\n'
+        'queries:\n'
+        '  - id: q1\n'
+        '    nl_query: test\n'
+        '    expected_sql: "SELECT 1"\n'
+        '    equivalent_values:\n'
+        '      September:\n'
+        '        - "Sep"\n'
+        '        - "09"\n'
+        '  - id: q2\n'
+        '    nl_query: test2\n'
+        '    expected_sql: "SELECT 2"\n'
+    )
+    corpus = load_corpus(corpus_path)
+    q1 = next(q for q in corpus.queries if q.id == "q1")
+    assert q1.equivalent_values == {"September": ["Sep", "09"]}
+    q2 = next(q for q in corpus.queries if q.id == "q2")
+    assert q2.equivalent_values == {}  # not declared → empty

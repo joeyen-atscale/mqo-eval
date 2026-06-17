@@ -33,6 +33,30 @@ def _cell_key(v: Any) -> tuple[str, Any]:
     return ("s", str(v).strip().casefold())
 
 
+def _cell_key_with_equiv(v: Any, value_equiv: dict[str, list[str]]) -> tuple[str, Any]:
+    """Canonical key for a cell with per-case value-equivalence applied.
+
+    First computes the normal key; then, if the string form of v appears in
+    any equivalence group (as either the canonical or an alternative), the
+    key is normalised to the canonical (first) entry of the matching group.
+    This lets a correct filter expressed differently (e.g. ``'September'`` vs
+    ``'1998-09-01T00:00:00Z'``) avoid a row miss.
+
+    Default (no ``value_equiv``) → identical to ``_cell_key``.
+    """
+    base = _cell_key(v)
+    if not value_equiv:
+        return base
+    raw = str(v).strip().casefold() if v is not None else None
+    for canonical, alternatives in value_equiv.items():
+        canon_cf = canonical.strip().casefold()
+        alts_cf = [a.strip().casefold() for a in alternatives]
+        if raw in (canon_cf, *alts_cf):
+            # Normalise to canonical so ref and candidate use the same key.
+            return ("s", canon_cf)
+    return base
+
+
 # ── Column normalization ───────────────────────────────────────────────────────
 
 
@@ -66,9 +90,11 @@ def compute_metrics(
     reference: ReferenceTable,
     candidate: ReferenceTable,
     equiv: list[list[str]] | None = None,
+    value_equiv: dict[str, list[str]] | None = None,
 ) -> TableMetrics:
     """Compute recall/Jaccard — exactly per mcp-eval-scoring-spec."""
     equiv = equiv or []
+    value_equiv = value_equiv or {}
 
     # Column matching (set intersection, equivalence-aware)
     ref_cols = reference.columns
@@ -102,15 +128,15 @@ def compute_metrics(
         for rc in ref_cols_matched:
             for i, ac in enumerate(cols):
                 if _columns_match(rc, ac, equiv):
-                    result.append(_cell_key(row[i] if i < len(row) else None))
+                    result.append(_cell_key_with_equiv(row[i] if i < len(row) else None, value_equiv))
                     break
             else:
-                result.append(_cell_key(None))
+                result.append(_cell_key_with_equiv(None, value_equiv))
         return tuple(result)
 
     ref_keys: Counter[Any] = Counter(
         tuple(
-            _cell_key(v)
+            _cell_key_with_equiv(v, value_equiv)
             for i, v in enumerate(r)
             if i < len(ref_cols) and _normalize_col(ref_cols[i]) in matched_cols
         )
@@ -145,9 +171,11 @@ def score_case(
     candidate: AgentAnswer,
     pass_threshold: float = 0.95,
     equiv: list[list[str]] | None = None,
+    value_equiv: dict[str, list[str]] | None = None,
 ) -> ScoringResult:
     """Score candidate against reference per mcp-eval-scoring-spec."""
     equiv = equiv or []
+    value_equiv = value_equiv or {}
 
     # Oracle failures
     if reference is None or isinstance(reference, OracleError):
@@ -209,7 +237,7 @@ def score_case(
         return ScoringResult("wrong", detail="unexpected answer type")
 
     cand_table = ReferenceTable(columns=candidate.columns, rows=candidate.rows)
-    metrics = compute_metrics(reference, cand_table, equiv)
+    metrics = compute_metrics(reference, cand_table, equiv, value_equiv)
     passed = metrics.column_recall >= 1.0 and metrics.row_recall >= pass_threshold
     return ScoringResult(
         verdict="correct" if passed else "wrong",

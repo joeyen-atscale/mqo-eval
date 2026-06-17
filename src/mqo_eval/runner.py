@@ -99,7 +99,11 @@ def _score_one_rep(
         reference = execute_golden_cli(cfg, query.id, query.expected_sql)
 
     equiv = query.equivalent_attributes or []
-    result = score_case(reference, answer, pass_threshold=pass_threshold, equiv=equiv)
+    value_equiv = query.equivalent_values or {}
+    result = score_case(
+        reference, answer, pass_threshold=pass_threshold,
+        equiv=equiv, value_equiv=value_equiv,
+    )
 
     row_recall: float | None = None
     jaccard: float | None = None
