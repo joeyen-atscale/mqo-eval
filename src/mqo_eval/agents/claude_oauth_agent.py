@@ -35,7 +35,7 @@ Emit ONLY the JSON object as the last line of your response. No markdown fences 
 @dataclass
 class ClaudeOAuthConfig:
     catalog_path: str = ""          # path to mqo-mcp-server catalog JSON
-    model: str = "claude-sonnet-4-6-20250514"  # default to Sonnet (faster, cheaper)
+    model: str = ""  # empty = use claude's default (Opus); set to e.g. "claude-sonnet-4-6" to override
     timeout_s: float = 120.0
     mcp_timeout_ms: int = 60_000    # MCP_TIMEOUT env var for stdio server startup
     extra_args: list[str] = field(default_factory=list)
@@ -135,6 +135,7 @@ class ClaudeOAuthAgent:
             result = subprocess.run(
                 cmd,
                 capture_output=True,
+                stdin=subprocess.DEVNULL,  # prevent stdin-pipe inheritance from parent
                 text=True,
                 env=env,
                 timeout=self.cfg.timeout_s,
