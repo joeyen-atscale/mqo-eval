@@ -1,0 +1,62 @@
+{
+  "schema_version": "intent-card.v1",
+  "slug": "mqoeval-harness-core",
+  "target": "cli",
+  "root_motivation": "Engineers running MQO accuracy evals have no Python harness they own: the old Python harness was discarded, AtScaleInc/mcp-eval is off-limits, and the Rust mqo-eval has been retired in favour of Python. Without a corpus loader, agent answer-contract, run-loop, and results writer, none of the downstream components (oracle, scoring, agents) have a host to plug into — and the PR #42 corpus of 20 active NLQs cannot be loaded or executed at all.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "level": "MUST",
+      "judged": false,
+      "text": "Given the PR #42 corpus YAML (tpcds_sql_derived_limited.yaml), when loaded, then 21 entries parse, the one disabled entry is Skipped, and exactly 20 active cases are enumerated."
+    },
+    {
+      "id": "AC-2",
+      "level": "MUST",
+      "judged": false,
+      "text": "Given each AgentAnswer variant (tabular/handle/scalar/cannot_answer), when serialised then deserialised, then the result equals the original; and given malformed input, a typed parse error is raised (not a crash or silent wrong value)."
+    },
+    {
+      "id": "AC-3",
+      "level": "MUST",
+      "judged": false,
+      "text": "Given '--agent stub' and a corpus, when a run executes with ANTHROPIC_API_KEY unset and no network calls, then a valid RunRecord is written to results/stub/<server>/<corpus>/<run_id>.json."
+    },
+    {
+      "id": "AC-4",
+      "level": "MUST",
+      "judged": false,
+      "text": "Given two consecutive runs at default settings, when both complete, then two distinct archive files exist (no overwrite of the first by the second)."
+    },
+    {
+      "id": "AC-5",
+      "level": "MUST",
+      "judged": false,
+      "text": "Given an unknown --agent name (not in agents.yaml, not an existing path), when resolved, then the process exits non-zero and prints the list of known backend names."
+    },
+    {
+      "id": "AC-6",
+      "level": "MUST",
+      "judged": false,
+      "text": "Given a corpus where every case is disabled, when run, then the denominator is 0 and the summary reports 'no active cases' without a division-by-zero error."
+    },
+    {
+      "id": "AC-7",
+      "level": "MUST",
+      "judged": false,
+      "text": "Given an agent that emits malformed JSON for one case, when the run executes, then that case is recorded with a typed parse-error verdict and the run continues to the remaining cases."
+    },
+    {
+      "id": "AC-8",
+      "level": "MUST",
+      "judged": false,
+      "text": "Given a --corpus path that does not exist, when the run starts, then it fails fast with a clear path-not-found error before attempting any agent invocation."
+    },
+    {
+      "id": "AC-9",
+      "level": "SHOULD",
+      "judged": false,
+      "text": "Given a completed RunRecord, when 'mqo-eval summary --results <file>' is invoked, then it prints pass count, denominator, mean recall (null when absent), and verdict-class counts."
+    }
+  ]
+}

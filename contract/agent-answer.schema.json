@@ -1,0 +1,96 @@
+{
+  "$defs": {
+    "CannotAnswer": {
+      "properties": {
+        "answer_type": {
+          "const": "cannot_answer",
+          "default": "cannot_answer",
+          "title": "Answer Type",
+          "type": "string"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "title": "CannotAnswer",
+      "type": "object"
+    },
+    "HandleAnswer": {
+      "properties": {
+        "answer_type": {
+          "const": "handle",
+          "default": "handle",
+          "title": "Answer Type",
+          "type": "string"
+        },
+        "handle_id": {
+          "title": "Handle Id",
+          "type": "string"
+        },
+        "resolve": {
+          "additionalProperties": true,
+          "default": {},
+          "title": "Resolve",
+          "type": "object"
+        }
+      },
+      "required": [
+        "handle_id"
+      ],
+      "title": "HandleAnswer",
+      "type": "object"
+    },
+    "ScalarAnswer": {
+      "properties": {
+        "answer_type": {
+          "const": "scalar",
+          "default": "scalar",
+          "title": "Answer Type",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "ScalarAnswer",
+      "type": "object"
+    },
+    "TabularAnswer": {
+      "properties": {
+        "answer_type": {
+          "const": "tabular",
+          "default": "tabular",
+          "title": "Answer Type",
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "title": "TabularAnswer",
+      "type": "object"
+    }
+  },
+  "title": "AgentAnswer"
+}

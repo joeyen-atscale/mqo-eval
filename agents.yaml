@@ -1,0 +1,13 @@
+agents:
+  stub:
+    command: "python -m mqo_eval.stub_agent"
+    kind: subprocess
+    capabilities:
+      requires_api: false
+      returns_handle: false
+  mqo-agent:
+    command: "mqo-agent ask --mock"
+    kind: subprocess
+    capabilities:
+      requires_api: false
+      returns_handle: false

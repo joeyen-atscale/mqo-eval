@@ -1,0 +1,211 @@
+context: |
+  All questions concern the TPC-DS benchmark dataset. Use the model
+  "atscale_catalogs"."tpcds_Databricks"."tpcds_benchmark_model" exclusively to write PgSql queries.
+  The server also hosts unrelated models (e.g. AdventureWorks: ASAdventureSmall,
+  ResellerPerspective) — do not query those; their data will produce wrong
+  answers for these questions. The system groups automatically the queries by the dimensions, so
+  no group by is necessary, unless you want to group by some modified value. Also, when selecting from a dimension,
+  it will return the distinct values, so no need to use DISTINCT for them.
+  Null dimension values are not included in the model, so no need to filter them out.
+  Try to use already existing measures instead of write your own aggregations, if possible.
+
+# Full mirror of tpcds_sql_derived.yaml (same case ids), with an explicit limit
+# added only to the large-result cases — a "top N" in the question and a matching
+# ORDER BY ... LIMIT 20 in the reference. Probes whether bounding the result helps
+# the agent (vs. declining/truncating a large answer). Cases that already return
+# <=20 rows (scalars, tightly-filtered, small-dimension aggregations) are copied
+# verbatim. For the limited cases the question spells out the *full* sort (the
+# ranking key plus tie-breakers) so the top-N membership is deterministic and the
+# agent can reproduce the reference's exact 20; comparison stays unordered (the
+# set of the top 20 is what's scored).
+
+queries:
+  - id: express-shipping-carriers
+    nl_query: "What shipping carriers are available for shipping type 'EXPRESS'?"
+    expected_sql: |
+      SELECT "Carrier"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Ship Mode Type" = 'EXPRESS';
+    disabled: false
+
+  - id: midway-stores
+    nl_query: "What is the name, manager and floor space of each store in the city of Midway?"
+    expected_sql: |
+      SELECT "Store Name", "Store Manager", "Store Floor Space"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Store City" = 'Midway';
+    disabled: false
+
+  - id: fairview-warehouses
+    nl_query: "What is the name and square footage for each warehouse in the city of Fairview?"
+    expected_sql: |
+      SELECT "Warehouse Name", "Warehouse Square Feet"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Warehouse City" = 'Fairview';
+    disabled: false
+
+  - id: large-warehouses
+    nl_query: "What is the name of each warehouse with more than 140000 square feet of space?"
+    expected_sql: |
+      SELECT "Warehouse Name"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Warehouse Square Feet" > 140000;
+    disabled: false
+
+  - id: catalog-customer-count
+    nl_query: "What is the count of catalog customers?"
+    expected_sql: |
+      SELECT "Catalog Customer Count"
+      FROM ${CatalogName}.${ModelName};
+    disabled: false
+
+  - id: total-quantity-sold-per-year
+    nl_query: "What is the total quantity sold each year?"
+    expected_sql: |
+      SELECT "Sold Calendar Year", "Total Quantity Sold"
+      FROM ${CatalogName}.${ModelName};
+    disabled: false
+
+  - id: product-count-per-category
+    nl_query: "What is the count of products in each product category?"
+    expected_sql: |
+      SELECT "Product category", "Total Product Count"
+      FROM ${CatalogName}.${ModelName};
+    disabled: false
+
+  # LIMITED: ~41 store numbers -> the 20 lowest (single, unique sort key).
+  - id: unique-stores-tennessee
+    nl_query: "What are the unique store numbers in the state of Tennessee? Give the 20 lowest, ordered by store number ascending."
+    expected_sql: |
+      SELECT "Store Number"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Store State Name" = 'Tennessee'
+      ORDER BY "Store Number" ASC
+      LIMIT 20;
+    disabled: false
+
+  - id: corpcorp-brand-products
+    nl_query: "What is the name of each product of brand name 'corpcorp #1'?"
+    expected_sql: |
+      SELECT "Item Product Name"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Product Brand Name" = 'corpcorp #1';
+    disabled: false
+
+  - id: able-manufacturer-brands
+    nl_query: "What brand names are made by the manufacturer named able?"
+    expected_sql: |
+      SELECT "Product Brand Name"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Product Manufacturer Name" = 'able';
+    disabled: false
+
+  - id: products-price-above-70
+    nl_query: "What is the name of each product with a current price greater than 70?"
+    expected_sql: |
+      SELECT "Item Product Name"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Product Current Price" > 70;
+    disabled: true
+
+  # LIMITED: one row per store -> top 20 by employee count, ties by store name.
+  - id: store-employee-counts
+    nl_query: "For each store name, how many employees work there? Give the top 20 ordered by employee count (highest first), breaking ties by store name (A→Z)."
+    expected_sql: |
+      SELECT "Store Name", "Store Number of Employees"
+      FROM ${CatalogName}.${ModelName}
+      ORDER BY "Store Number of Employees" DESC, "Store Name" ASC
+      LIMIT 20;
+    disabled: false
+
+  # LIMITED: per-product returns (was hitting the 200k row cap) -> top 20.
+  - id: store-returns-per-product
+    nl_query: "What is the number of store returns for each product? Give the top 20 ordered by store returns (highest first), breaking ties by product name (A→Z)."
+    expected_sql: |
+      SELECT "Item Product Name", "Store Returns Count"
+      FROM ${CatalogName}.${ModelName}
+      ORDER BY "Store Returns Count" DESC, "Item Product Name" ASC
+      LIMIT 20;
+    disabled: false
+
+  # LIMITED: per-store average -> top 20.
+  - id: avg-sales-quantity-per-store
+    nl_query: "What is the average sales quantity per store number? Give the top 20 ordered by average sales quantity (highest first), breaking ties by store number (lowest first)."
+    expected_sql: |
+      SELECT "Store Number", "Average Store Sales Quantity"
+      FROM ${CatalogName}.${ModelName}
+      ORDER BY "Average Store Sales Quantity" DESC, "Store Number" ASC
+      LIMIT 20;
+    disabled: false
+
+  # LIMITED: per-product net profit (was hitting the 200k row cap) -> top 20.
+  - id: total-net-profit-per-product
+    nl_query: "What is the total net profit per product name? Give the top 20 ordered by net profit (highest first), breaking ties by product name (A→Z)."
+    expected_sql: |
+      SELECT "Item Product Name", "Total Net Profit"
+      FROM ${CatalogName}.${ModelName}
+      ORDER BY "Total Net Profit" DESC, "Item Product Name" ASC
+      LIMIT 20;
+    disabled: false
+
+  # LIMITED: per-brand quantity -> top 20.
+  - id: store-quantity-sold-per-brand
+    nl_query: "For each brand name, what was the quantity sold in store? Give the top 20 ordered by store quantity sold (highest first), breaking ties by brand name (A→Z)."
+    expected_sql: |
+      SELECT "Product Brand Name", "Store Quantity Sold"
+      FROM ${CatalogName}.${ModelName}
+      ORDER BY "Store Quantity Sold" DESC, "Product Brand Name" ASC
+      LIMIT 20;
+    disabled: false
+
+  # LIMITED: per-state web sales (~50 states) -> top 20.
+  - id: web-sales-per-customer-state
+    nl_query: "What is the total web sales for each customer home state? Give the top 20 ordered by web sales (highest first), breaking ties by state name (A→Z)."
+    expected_sql: |
+      SELECT "Customer State Name", "Web Sales"
+      FROM ${CatalogName}.${ModelName}
+      ORDER BY "Web Sales" DESC, "Customer State Name" ASC
+      LIMIT 20;
+    disabled: false
+
+  # LIMITED: customers in income band 9 (was hitting the 200k row cap) -> top 20.
+  - id: customer-vehicle-count-income-band-9
+    nl_query: "What is the customer id and vehicle count for every customer in income band 9? Give the top 20 ordered by vehicle count (highest first), breaking ties by customer id (ascending)."
+    expected_sql: |
+      SELECT "Customer ID", "Vehicle Count"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Income Band" = 9
+      ORDER BY "Vehicle Count" DESC, "Customer ID" ASC
+      LIMIT 20;
+    disabled: false
+
+  - id: net-profit-tier-by-store-gender-2002
+    nl_query: "What is the net profit tier for each store name and gender in the 2002 sales year?"
+    expected_sql: |
+      SELECT "Store Name", "Net Profit Tier", "Gender"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Sold Calendar Year" = 2002;
+    disabled: false
+
+  # LIMITED: customers who shopped store 'ese' in 2001 -> first 20 by first name, ties by gender.
+  - id: customers-ese-store-2001
+    nl_query: "What was the first name and gender of each customer that shopped in the store named 'ese' in 2001? Give the first 20 ordered by first name (A→Z), breaking ties by gender (A→Z)."
+    expected_sql: |
+      SELECT "Customer First Name", "Gender"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Store Name" = 'ese'
+      AND "Sold Calendar Year" = 2001
+      ORDER BY "Customer First Name" ASC, "Gender" ASC
+      LIMIT 20;
+    disabled: false
+
+  # LIMITED: customers in New Jersey -> first 20, full ordering spelled out.
+  - id: customer-details-new-jersey
+    nl_query: "What is the first name, income band, vehicle count, and buy potential for each customer that lives in the state of New Jersey? Give the first 20 ordered by first name (A→Z), then income band, then vehicle count, then buy potential (all ascending)."
+    expected_sql: |
+      SELECT "Customer First Name", "Income Band", "Vehicle Count", "Customer Buy Potential"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Customer State Name" = 'New Jersey'
+      ORDER BY "Customer First Name" ASC, "Income Band" ASC, "Vehicle Count" ASC, "Customer Buy Potential" ASC
+      LIMIT 20;
+    disabled: false
