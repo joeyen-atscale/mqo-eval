@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -41,7 +42,7 @@ def _invoke_agent(entry: AgentEntry, query: Query, context: str, model: str) -> 
         capture_output=True,
         text=True,
         env=env,
-        timeout=120,
+        timeout=360,
     )
     return result.stdout
 
@@ -134,9 +135,13 @@ def run_corpus(
         pg_pass_env: str = config.get("pg_pass_env", "ATSCALE_PG_PASS")
         catalog_name: str = config.get("catalog_name", "atscale_catalogs")
         model_name: str = config.get("model_name", "tpcds_benchmark_model")
+        pg_user: str = config.get("pg_user") or os.environ.get("ATSCALE_PG_USER", "atscale")
+        pg_dbname: str = config.get("pg_dbname", "atscale_catalogs")
         pgwire_cfg = PgwireConfig(
             pg_host=pg_host,
+            pg_user=pg_user,
             pg_pass_env=pg_pass_env,
+            pg_dbname=pg_dbname,
             catalog_name=catalog_name,
             model_name=model_name,
         )

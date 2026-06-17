@@ -36,6 +36,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
         "oracle": args.oracle,
         "pg_host": args.pg_host,
         "pg_pass_env": args.pg_pass_env,
+        "pg_user": args.pg_user,
+        "pg_dbname": args.pg_dbname,
         "catalog_name": args.catalog_name,
         "model_name": args.model_name,
         "pass_threshold": args.pass_threshold,
@@ -125,6 +127,8 @@ def _build_parser() -> argparse.ArgumentParser:
         default="localhost",
         help="PGWire host (only used with --oracle pgwire)",
     )
+    run_p.add_argument("--pg-user", default=None, help="PGWire user (default: $ATSCALE_PG_USER or 'atscale')")
+    run_p.add_argument("--pg-dbname", default="atscale_catalogs", help="PGWire dbname (AtScale catalog)")
     run_p.add_argument(
         "--pg-pass-env",
         default="ATSCALE_PG_PASS",

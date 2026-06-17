@@ -36,15 +36,37 @@ Emit ONLY the JSON object as the last line of your response. No markdown fences 
 class ClaudeOAuthConfig:
     catalog_path: str = ""          # path to mqo-mcp-server catalog JSON
     model: str = ""  # empty = use claude's default (Opus); set to e.g. "claude-sonnet-4-6" to override
-    timeout_s: float = 120.0
+    timeout_s: float = 300.0
     mcp_timeout_ms: int = 60_000    # MCP_TIMEOUT env var for stdio server startup
     extra_args: list[str] = field(default_factory=list)
 
 
 def _build_mcp_config(cfg: ClaudeOAuthConfig) -> dict[str, Any]:
-    """Build the MCP server config dict for mqo-mcp-server."""
+    """Build the MCP server config dict for mqo-mcp-server.
+
+    Fixture mode (default): just ``--catalog <snapshot>``.
+    Live mode (when ``MQO_ENDPOINT`` is set): add ``--endpoint`` + OIDC flags so
+    the server queries the live AtScale cluster — required when the gold oracle
+    scores against live data (the fixture data is synthetic and won't match).
+    """
     catalog = cfg.catalog_path or os.environ.get("MQO_CATALOG_PATH", "")
     args = ["--catalog", catalog] if catalog else []
+
+    endpoint = os.environ.get("MQO_ENDPOINT", "")
+    if endpoint:
+        args += ["--endpoint", endpoint]
+        for env_key, flag in [
+            ("MQO_XMLA_URL", "--xmla-url"),
+            ("MQO_OIDC_TOKEN_URL", "--oidc-token-url"),
+            ("MQO_OIDC_CLIENT_ID", "--oidc-client-id"),
+            ("MQO_OIDC_REALM", "--oidc-realm"),
+        ]:
+            val = os.environ.get(env_key, "")
+            if val:
+                args += [flag, val]
+        # secret passed by env-var NAME, never as a value
+        args += ["--oidc-client-secret-env", os.environ.get("MQO_OIDC_SECRET_ENV", "ATSCALE_OIDC_SECRET")]
+
     return {
         "mcpServers": {
             "mqo": {
