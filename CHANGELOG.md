@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.0 — runner-integration
+Wires oracle.execute_golden + scoring.score_case into run_corpus; replaces the _verdict_from_answer stub. Adds k-of-n (--repeat/--min-pass-reps), --pass-threshold, --oracle pgwire path with PGWire precheck. Mean recall/Jaccard in summary. 12 new integration tests.
+
+
 ## v0.5.0 — record-replay-agent
 Cassette agent: record mode wraps any delegate agent and saves AgentAnswer envelopes to JSONL; replay mode serves them back with zero API/model calls. Schema-versioned cassettes. CI gate: replay runs entire corpus deterministically.
 
