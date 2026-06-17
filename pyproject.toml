@@ -23,6 +23,7 @@ packages = ["src/mqo_eval"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]
 
 [tool.mypy]
 strict = true
