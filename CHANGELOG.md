@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.8.0 — gold-via-cli
+Adds `--oracle cli` backend: shells out to `mqo-pg-query` (Rust CLI with OIDC/TLS auth) to mint gold `ReferenceTable` per case. New `src/mqo_eval/oracle_cli.py` with `CliOracleConfig`, `execute_golden_cli`, and `cli_precheck` (eager SELECT-1 pre-check fails fast <10s if binary is missing/misconfigured). Wired into `runner.py` and `cli.py` alongside existing `fixture`/`pgwire` oracles; adds `--gold-query-cmd` and `--cli-endpoint` flags. 23 new mocked tests; all 108 tests green; ruff+mypy clean.
+
 ## v0.7.0 — claude-oauth-agent
 Headless Claude agent via OAuth subscription: no API key, no local model. Invokes claude -p --output-format json with mqo-mcp wired via --mcp-config, tools pre-approved via --allowedTools mcp__mqo__*. ANTHROPIC_API_KEY stripped from child env. 9 mocked tests.
 

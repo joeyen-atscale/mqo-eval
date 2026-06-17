@@ -10,6 +10,7 @@ from typing import Any
 
 from .contract import AgentAnswer, ParseError, parse_answer
 from .corpus import Corpus, Query
+from .oracle_cli import CliOracleConfig, cli_precheck, execute_golden_cli
 from .oracle_pgwire import (
     PgwireConfig,
     execute_golden,
@@ -62,7 +63,7 @@ def _score_one_rep(
     context: str,
     model: str,
     oracle_mode: str,
-    cfg: Any,  # PgwireConfig | None
+    cfg: PgwireConfig | CliOracleConfig | None,
     pass_threshold: float,
 ) -> tuple[str, AgentAnswer | None, str | None, float | None, float | None]:
     """Invoke agent once and score.
@@ -82,14 +83,20 @@ def _score_one_rep(
         verdict = _fixture_verdict(answer)
         return verdict, answer, None, None, None
 
-    # oracle == "pgwire"
-    assert cfg is not None  # pgwire_precheck already ran; cfg is set
-    substituted_sql = substitute_placeholders(
-        query.expected_sql,
-        cfg.catalog_name,
-        cfg.model_name,
-    )
-    reference = execute_golden(cfg, query.id, substituted_sql)
+    assert cfg is not None  # precheck already ran; cfg is set
+
+    if oracle_mode == "pgwire":
+        assert isinstance(cfg, PgwireConfig)
+        substituted_sql = substitute_placeholders(
+            query.expected_sql,
+            cfg.catalog_name,
+            cfg.model_name,
+        )
+        reference = execute_golden(cfg, query.id, substituted_sql)
+    else:
+        # oracle == "cli"
+        assert isinstance(cfg, CliOracleConfig)
+        reference = execute_golden_cli(cfg, query.id, query.expected_sql)
 
     equiv = query.equivalent_attributes or []
     result = score_case(reference, answer, pass_threshold=pass_threshold, equiv=equiv)
@@ -128,8 +135,8 @@ def run_corpus(
         config=config,
     )
 
-    # Build PgwireConfig and run precheck once (fast-fail before case loop)
-    pgwire_cfg = None
+    # Build oracle config and run precheck once (fast-fail before case loop)
+    pgwire_cfg: PgwireConfig | CliOracleConfig | None = None
     if oracle_mode == "pgwire":
         pg_host: str = config.get("pg_host", "localhost")
         pg_pass_env: str = config.get("pg_pass_env", "ATSCALE_PG_PASS")
@@ -146,6 +153,21 @@ def run_corpus(
             model_name=model_name,
         )
         pgwire_precheck(pgwire_cfg)  # raises RuntimeError on failure → propagates up
+    elif oracle_mode == "cli":
+        gold_query_cmd: str = config.get("gold_query_cmd", "mqo-pg-query")
+        cli_endpoint: str = config.get("cli_endpoint", "")
+        cli_catalog: str = config.get("catalog_name", "atscale_catalogs")
+        cli_model: str = config.get("model_name", "tpcds_benchmark_model")
+        cli_timeout: int = int(config.get("cli_timeout_s", 120))
+        cli_cfg = CliOracleConfig(
+            gold_query_cmd=gold_query_cmd,
+            endpoint=cli_endpoint,
+            catalog_name=cli_catalog,
+            model_name=cli_model,
+            timeout_s=cli_timeout,
+        )
+        cli_precheck(cli_cfg)  # raises RuntimeError on failure → propagates up
+        pgwire_cfg = cli_cfg
 
     # Skipped cases
     for q in corpus.skipped:

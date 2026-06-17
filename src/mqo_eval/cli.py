@@ -40,6 +40,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
         "pg_dbname": args.pg_dbname,
         "catalog_name": args.catalog_name,
         "model_name": args.model_name,
+        "gold_query_cmd": args.gold_query_cmd,
+        "cli_endpoint": args.cli_endpoint,
         "pass_threshold": args.pass_threshold,
         "repeat": args.repeat,
         "min_pass_reps": (
@@ -118,9 +120,12 @@ def _build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--agents-yaml", default="agents.yaml", help="registry file")
     run_p.add_argument(
         "--oracle",
-        choices=["fixture", "pgwire"],
+        choices=["fixture", "pgwire", "cli"],
         default="fixture",
-        help="oracle backend: fixture (offline) or pgwire (live PGWire scoring)",
+        help=(
+            "oracle backend: fixture (offline), pgwire (live PGWire/psycopg2), "
+            "or cli (shell out to mqo-pg-query)"
+        ),
     )
     run_p.add_argument(
         "--pg-host",
@@ -161,6 +166,22 @@ def _build_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="minimum correct reps required for overall correct (default: --repeat)",
+    )
+    run_p.add_argument(
+        "--gold-query-cmd",
+        default="mqo-pg-query",
+        help=(
+            "path or name of the mqo-pg-query binary (only used with --oracle cli; "
+            "default: 'mqo-pg-query' on PATH)"
+        ),
+    )
+    run_p.add_argument(
+        "--cli-endpoint",
+        default="",
+        help=(
+            "AtScale PGWire endpoint (host:port) passed to mqo-pg-query "
+            "(only used with --oracle cli)"
+        ),
     )
 
     sum_p = sub.add_parser("summary", help="summarise a run record")
