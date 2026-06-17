@@ -7,7 +7,7 @@ import os
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 
 def _now_iso() -> str:
@@ -19,6 +19,9 @@ def _make_run_id(corpus_id: str) -> str:
     return f"{ts}-{corpus_id[:8]}"
 
 
+ROW_SAMPLE_CAP = 10  # max rows stored in candidate/reference samples
+
+
 @dataclass
 class CaseRecord:
     id: str
@@ -27,10 +30,19 @@ class CaseRecord:
     answer_type: str | None = None
     detail: str | None = None
     row_recall: float | None = None
-    column_recall: float | None = None
+    column_recall: Optional[float] = None
+    column_jaccard: Optional[float] = None
     jaccard: float | None = None
     rep_verdicts: list[str] | None = None
     latency_ms: int = 0
+    # Diagnostic fields (G2/FR2): bounded table snapshots for explainability
+    candidate_columns: Optional[list[str]] = None
+    reference_columns: Optional[list[str]] = None
+    candidate_rows_sample: Optional[list[list]] = None
+    reference_rows_sample: Optional[list[list]] = None
+    row_count_candidate: Optional[int] = None
+    row_count_reference: Optional[int] = None
+    sample_truncated: Optional[bool] = None
 
 
 @dataclass
