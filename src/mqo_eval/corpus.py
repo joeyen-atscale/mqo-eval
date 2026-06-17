@@ -16,6 +16,10 @@ class Query:
     expected_sql: str
     disabled: bool = False
     equivalent_attributes: list[list[str]] = field(default_factory=list)
+    # Per-case value-equivalence map: {canonical_value: [equivalent_value, ...]}
+    # Applied during cell comparison so a correct value expressed differently
+    # (e.g. a date format difference) is not a row miss.  Default empty → no effect.
+    equivalent_values: dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -52,6 +56,12 @@ def load_corpus(path: Path | str) -> Corpus:
     for i, item in enumerate(raw_queries):
         if not isinstance(item, dict):
             raise ValueError(f"query[{i}] must be a mapping")
+        raw_ev = item.get("equivalent_values") or {}
+        eq_values: dict[str, list[str]] = {}
+        if isinstance(raw_ev, dict):
+            for k, v in raw_ev.items():
+                if isinstance(v, list):
+                    eq_values[str(k)] = [str(x) for x in v]
         queries.append(
             Query(
                 id=str(item["id"]),
@@ -59,6 +69,7 @@ def load_corpus(path: Path | str) -> Corpus:
                 expected_sql=str(item.get("expected_sql", "")),
                 disabled=bool(item.get("disabled", False)),
                 equivalent_attributes=list(item.get("equivalent_attributes") or []),
+                equivalent_values=eq_values,
             )
         )
 

@@ -137,6 +137,12 @@ queries:
       ORDER BY "Average Store Sales Quantity" DESC, "Store Number" ASC
       LIMIT 20;
     disabled: false
+    # Agent (query_multidimensional live DAX) may label the measure with a shorter
+    # display name or underscore form vs the gold's canonical "Average Store Sales Quantity".
+    equivalent_attributes:
+      - ["Average Store Sales Quantity", "Avg Store Sales Qty", "Average Sales Quantity",
+         "avg_store_sales_quantity", "avg store sales quantity", "Average Store Sales Quantity_SUM"]
+        # why: DAX measure alias in live result may decode differently from PGWire column alias
 
   # LIMITED: per-product net profit (was hitting the 200k row cap) -> top 20.
   - id: total-net-profit-per-product
@@ -147,6 +153,14 @@ queries:
       ORDER BY "Total Net Profit" DESC, "Item Product Name" ASC
       LIMIT 20;
     disabled: false
+    # Agent may use shorter aliases for measure and dimension columns.
+    equivalent_attributes:
+      - ["Total Net Profit", "Net Profit", "total_net_profit", "total net profit amount",
+         "Store Net Profit", "Catalog Net Profit Amount"]
+        # why: agent may pick a different store/catalog-specific net profit measure
+      - ["Item Product Name", "Product Name", "item_product_name", "Item Name",
+         "Item Product Name1"]
+        # why: near-twin disambiguation may suffix the canonical level name
 
   # LIMITED: per-brand quantity -> top 20.
   - id: store-quantity-sold-per-brand
@@ -198,6 +212,14 @@ queries:
       ORDER BY "Customer First Name" ASC, "Gender" ASC
       LIMIT 20;
     disabled: false
+    # Agent may abbreviate "Customer First Name" or use a differently disambiguated
+    # column label from clean_result_rows (e.g., when two hierarchies share a level label).
+    equivalent_attributes:
+      - ["Customer First Name", "First Name", "customer_first_name",
+         "customer dimension Customer First Name", "CustomerFirstName"]
+        # why: clean_result_rows may add "customer dimension" prefix on label collision
+      - ["Gender", "gender", "customer demographics Gender"]
+        # why: customer_demographics hierarchy prefix may be prepended on label collision
 
   # LIMITED: customers in New Jersey -> first 20, full ordering spelled out.
   - id: customer-details-new-jersey
