@@ -1,6 +1,13 @@
 # Changelog
 
+## v0.3.0 — api-free-agent
+OpenAI-compatible NL→query agent: session-holding MCP stdio transport, handle
+detection, turn cap, no-Anthropic-required; all 8 tests mocked.
+
 ## v0.2.0 — pgwire-golden-oracle
+## v0.3.0 — api-free-agent
+OpenAI-compatible NL→query agent: session-holding MCP stdio transport, handle
+detection, turn cap, no-Anthropic-required; all 8 tests mocked.
 PGWire golden-SQL oracle: execute `expected_sql` over a direct PGWire connection
 to produce a typed `ReferenceTable`, `Oversize`, or `OracleError`. Mocked tests;
 no live DB required for CI.
