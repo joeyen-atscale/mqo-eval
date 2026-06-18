@@ -16,6 +16,37 @@ from .contract import (
 )
 from .oracle_pgwire import OracleError, Oversize, ReferenceTable
 
+# ── Measureless-gold detection ────────────────────────────────────────────────
+
+# Aggregate function names that indicate a gold SQL contains a measure.
+_AGGREGATE_FUNCS = re.compile(
+    r"\b(SUM|COUNT|AVG|MIN|MAX|STDDEV|VARIANCE|MEDIAN|PERCENTILE)\s*\(",
+    re.IGNORECASE,
+)
+
+
+def is_measureless_gold(gold_sql: str) -> bool:
+    """Return True if *gold_sql* is a dimension-only projection with no aggregate.
+
+    A gold is considered measureless (and safe to deduplicate) when its SELECT
+    list contains no aggregate function call (SUM/COUNT/AVG/MIN/MAX/…) *and*
+    the statement has no GROUP BY clause.  Both conditions must hold: a query
+    with GROUP BY but no aggregate is unusual but should not be deduped because
+    its row multiplicity may be intentional.
+
+    This is a conservative heuristic — false-negatives (aggregate gold classified
+    as measureless) cannot occur because any aggregate function or GROUP BY
+    prevents dedup.  False-positives (dimension gold misclassified as aggregate)
+    could occur for exotic aggregate names not in _AGGREGATE_FUNCS, but that is
+    very unlikely in practice.
+    """
+    if not gold_sql or not gold_sql.strip():
+        return False
+    has_aggregate = bool(_AGGREGATE_FUNCS.search(gold_sql))
+    has_group_by = bool(re.search(r"\bGROUP\s+BY\b", gold_sql, re.IGNORECASE))
+    return not has_aggregate and not has_group_by
+
+
 # ── Cell canonicalization (matches mcp-eval-scoring-spec exactly) ─────────────
 
 
@@ -55,6 +86,32 @@ def _cell_key_with_equiv(v: Any, value_equiv: dict[str, list[str]]) -> tuple[str
             # Normalise to canonical so ref and candidate use the same key.
             return ("s", canon_cf)
     return base
+
+
+def dedup_reference_rows(
+    reference: ReferenceTable,
+    value_equiv: dict[str, list[str]] | None = None,
+) -> ReferenceTable:
+    """Return a new ReferenceTable with exact-duplicate rows collapsed.
+
+    Deduplication happens *after* value-equivalence normalisation so that rows
+    that differ only in spelling (e.g. a date format mismatch) are also
+    collapsed.  Column set and order are preserved.
+
+    This function is O(n) in the number of reference rows.
+    """
+    value_equiv = value_equiv or {}
+    seen: set[tuple[Any, ...]] = set()
+    deduped: list[list[Any]] = []
+    for row in reference.rows:
+        key = tuple(
+            _cell_key_with_equiv(v, value_equiv)
+            for v in row
+        )
+        if key not in seen:
+            seen.add(key)
+            deduped.append(row)
+    return ReferenceTable(columns=reference.columns, rows=deduped)
 
 
 # ── Column normalization ───────────────────────────────────────────────────────
@@ -164,6 +221,10 @@ class ScoringResult:
     verdict: str  # "correct"|"wrong"|"no_bind"|"oversize"|"declined"|"parse_error"
     metrics: TableMetrics | None = None
     detail: str | None = None
+    # Measureless-gold dedup fields (FR4 / G3)
+    gold_deduped: bool = False
+    gold_rows_pre: int | None = None
+    gold_rows_post: int | None = None
 
 
 def score_case(
@@ -172,8 +233,19 @@ def score_case(
     pass_threshold: float = 0.95,
     equiv: list[list[str]] | None = None,
     value_equiv: dict[str, list[str]] | None = None,
+    gold_sql: str | None = None,
 ) -> ScoringResult:
-    """Score candidate against reference per mcp-eval-scoring-spec."""
+    """Score candidate against reference per mcp-eval-scoring-spec.
+
+    When *gold_sql* is provided and ``is_measureless_gold(gold_sql)`` is True,
+    the reference rows are deduplicated to distinct member tuples before scoring
+    (FR1/G1).  This prevents a dimension-only gold that was evaluated at item
+    grain (e.g. no DISTINCT in the SQL) from penalising a server that correctly
+    returns distinct members.
+
+    The dedup metadata (``gold_deduped``, ``gold_rows_pre``, ``gold_rows_post``)
+    is recorded in the returned ``ScoringResult`` for auditability (FR4/G3).
+    """
     equiv = equiv or []
     value_equiv = value_equiv or {}
 
@@ -185,30 +257,47 @@ def score_case(
             "oversize", detail=f"reference oversize >{reference.cap} rows"
         )
 
+    # Measureless-gold dedup (FR1/G1/G2): only for real ReferenceTable instances
+    gold_deduped = False
+    gold_rows_pre: int | None = None
+    gold_rows_post: int | None = None
+    if gold_sql and is_measureless_gold(gold_sql) and reference.rows:
+        gold_rows_pre = len(reference.rows)
+        reference = dedup_reference_rows(reference, value_equiv)
+        gold_rows_post = len(reference.rows)
+        gold_deduped = True
+
+    # Helper: stamp dedup metadata onto any ScoringResult we return from here.
+    def _stamp(result: ScoringResult) -> ScoringResult:
+        result.gold_deduped = gold_deduped
+        result.gold_rows_pre = gold_rows_pre
+        result.gold_rows_post = gold_rows_post
+        return result
+
     # Empty reference: passes on empty/decline, fails on rows
     if not reference.rows:
         if isinstance(candidate, CannotAnswer):
-            return ScoringResult(
+            return _stamp(ScoringResult(
                 "correct", detail="declined as expected (empty reference)"
-            )
+            ))
         if isinstance(candidate, (TabularAnswer, HandleAnswer)):
             rows = getattr(candidate, "rows", [])
             if not rows:
-                return ScoringResult(
+                return _stamp(ScoringResult(
                     "correct", detail="0 rows matched (empty reference)"
-                )
-            return ScoringResult("wrong", detail=f"expected no rows, got {len(rows)}")
-        return ScoringResult("correct")  # scalar on empty ref = ok
+                ))
+            return _stamp(ScoringResult("wrong", detail=f"expected no rows, got {len(rows)}"))
+        return _stamp(ScoringResult("correct"))  # scalar on empty ref = ok
 
     # Candidate handle — return no_bind (resolution is external; we score what we have)
     if isinstance(candidate, HandleAnswer):
-        return ScoringResult(
+        return _stamp(ScoringResult(
             "no_bind", detail=f"handle {candidate.handle_id!r} not yet resolved"
-        )
+        ))
 
     # Candidate decline
     if isinstance(candidate, CannotAnswer):
-        return ScoringResult("wrong", detail=f"model declined: {candidate.reason}")
+        return _stamp(ScoringResult("wrong", detail=f"model declined: {candidate.reason}"))
 
     # Scalar on multi-row reference
     if isinstance(candidate, ScalarAnswer):
@@ -224,23 +313,23 @@ def score_case(
                 if math.isclose(
                     float(ref_val), float(cand_val), rel_tol=1e-3, abs_tol=1e-6
                 ):
-                    return ScoringResult("correct")
+                    return _stamp(ScoringResult("correct"))
             except (ValueError, TypeError):
                 pass
             if ref_val == cand_val:
-                return ScoringResult("correct")
-            return ScoringResult("wrong", detail=f"{cand_val!r} ≠ {ref_val!r}")
-        return ScoringResult("wrong", detail="scalar answer for multi-row reference")
+                return _stamp(ScoringResult("correct"))
+            return _stamp(ScoringResult("wrong", detail=f"{cand_val!r} ≠ {ref_val!r}"))
+        return _stamp(ScoringResult("wrong", detail="scalar answer for multi-row reference"))
 
     # Tabular answer
     if not isinstance(candidate, TabularAnswer):
-        return ScoringResult("wrong", detail="unexpected answer type")
+        return _stamp(ScoringResult("wrong", detail="unexpected answer type"))
 
     cand_table = ReferenceTable(columns=candidate.columns, rows=candidate.rows)
     metrics = compute_metrics(reference, cand_table, equiv, value_equiv)
     passed = metrics.column_recall >= 1.0 and metrics.row_recall >= pass_threshold
-    return ScoringResult(
+    return _stamp(ScoringResult(
         verdict="correct" if passed else "wrong",
         metrics=metrics,
         detail=f"recall={metrics.row_recall:.3f} jaccard={metrics.row_jaccard:.3f}",
-    )
+    ))

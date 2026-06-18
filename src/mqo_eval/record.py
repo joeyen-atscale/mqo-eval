@@ -46,6 +46,12 @@ class CaseRecord:
     # Selective-retest (PRD-mqoeval-selective-retest): set when a case is carried
     # forward from a prior run instead of being tested this cycle.
     carried_from_run_id: Optional[str] = None
+    # Measureless-gold dedup fields (PRD-mqoeval-dimension-distinct-gold-dedup)
+    # gold_deduped: True when the reference was deduplicated before scoring.
+    # gold_rows_pre/post: row counts before and after dedup (for auditability).
+    gold_deduped: Optional[bool] = None
+    gold_rows_pre: Optional[int] = None
+    gold_rows_post: Optional[int] = None
 
 
 @dataclass

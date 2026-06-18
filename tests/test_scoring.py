@@ -8,7 +8,7 @@ from mqo_eval.contract import (
     TabularAnswer,
 )
 from mqo_eval.oracle_pgwire import OracleError, Oversize, ReferenceTable
-from mqo_eval.scoring import compute_metrics, score_case
+from mqo_eval.scoring import compute_metrics, is_measureless_gold, score_case
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -391,3 +391,93 @@ def test_duplicate_names_in_group_no_error() -> None:
     equiv = [["net_profit", "profit", "net_profit", "profit"]]
     result = score_case(reference, candidate, equiv=equiv)
     assert result.verdict == "correct"
+
+
+# ── Measureless-gold dedup (PRD-mqoeval-dimension-distinct-gold-dedup) ─────────
+
+
+def test_is_measureless_gold_no_aggregate() -> None:
+    """Pure dimension projection — no SUM/COUNT/AVG/MIN/MAX and no GROUP BY."""
+    sql = 'SELECT "Product Brand Name" FROM tpcds_model WHERE "Product Manufacturer Name" = \'able\''
+    assert is_measureless_gold(sql) is True
+
+
+def test_is_measureless_gold_with_aggregate() -> None:
+    """Gold with SUM → not measureless."""
+    sql = 'SELECT "Store Number", SUM("Net Profit") FROM tpcds_model GROUP BY "Store Number"'
+    assert is_measureless_gold(sql) is False
+
+
+def test_is_measureless_gold_with_group_by_only() -> None:
+    """GROUP BY alone (no aggregate) → classified as not-measureless to be conservative."""
+    sql = 'SELECT "Brand", "Category" FROM tpcds_model GROUP BY "Brand", "Category"'
+    assert is_measureless_gold(sql) is False
+
+
+def test_measureless_gold_dedup_246_to_188() -> None:
+    """Simulate able-manufacturer-brands: 246 item-grain rows, 188 distinct brands.
+
+    AC-1: measureless gold (246 rows, 188 distinct) + agent returning 188 DISTINCT rows
+    → deduped to 188, verdict=correct (rr=1.0), gold_deduped=True.
+    """
+    # Build 246 reference rows: 188 distinct brands, with 58 duplicates sprinkled in.
+    distinct_brands = [f"brand_{i:03d}" for i in range(188)]
+    reference_rows: list[list] = [[b] for b in distinct_brands]
+    # Add 58 duplicates (repeat first 58 brands once more)
+    reference_rows += [[distinct_brands[i % 188]] for i in range(58)]
+    assert len(reference_rows) == 246
+
+    gold_sql = 'SELECT "Product Brand Name" FROM tpcds WHERE "Product Manufacturer Name" = \'able\''
+    reference = ref(["Product Brand Name"], reference_rows)
+    # Agent correctly returns 188 distinct brands
+    agent_rows = [[b] for b in distinct_brands]
+    candidate = tabular(["Product Brand Name"], agent_rows)
+
+    result = score_case(reference, candidate, pass_threshold=0.95, gold_sql=gold_sql)
+
+    assert result.verdict == "correct", f"Expected correct, got {result.verdict}: {result.detail}"
+    assert result.gold_deduped is True
+    assert result.gold_rows_pre == 246
+    assert result.gold_rows_post == 188
+    assert result.metrics is not None
+    assert abs(result.metrics.row_recall - 1.0) < 1e-6
+
+
+def test_aggregate_gold_not_deduped() -> None:
+    """AC-2: a gold with SUM (aggregate) is never deduped, even with duplicate rows.
+
+    FR3/G2: row multiplicity in aggregate golds must be preserved.
+    """
+    # Reference has two identical rows (legitimate: two stores with the same net profit)
+    gold_sql = 'SELECT "Store Number", SUM("Net Profit") AS profit FROM model GROUP BY "Store Number"'
+    reference_rows = [[103, 1000.0], [106, 1000.0]]  # different stores, same value
+    reference = ref(["Store Number", "profit"], reference_rows)
+    candidate = tabular(["Store Number", "profit"], [[103, 1000.0], [106, 1000.0]])
+
+    result = score_case(reference, candidate, pass_threshold=0.95, gold_sql=gold_sql)
+
+    assert result.verdict == "correct"
+    assert result.gold_deduped is False
+    assert result.gold_rows_pre is None  # not set when no dedup occurs
+    assert result.gold_rows_post is None
+
+
+def test_already_distinct_measureless_gold_is_noop() -> None:
+    """AC-5/Edge: measureless gold that is already fully distinct — dedup is a no-op.
+
+    Row count stays the same; verdict is unchanged.
+    """
+    gold_sql = 'SELECT "Product Brand Name" FROM tpcds WHERE "x" = 1'
+    distinct_brands = [f"brand_{i:03d}" for i in range(50)]
+    reference_rows = [[b] for b in distinct_brands]
+    reference = ref(["Product Brand Name"], reference_rows)
+    candidate = tabular(["Product Brand Name"], reference_rows)
+
+    result = score_case(reference, candidate, pass_threshold=0.95, gold_sql=gold_sql)
+
+    assert result.verdict == "correct"
+    assert result.gold_deduped is True  # dedup ran but was a no-op
+    assert result.gold_rows_pre == 50
+    assert result.gold_rows_post == 50
+    assert result.metrics is not None
+    assert result.metrics.row_recall == 1.0

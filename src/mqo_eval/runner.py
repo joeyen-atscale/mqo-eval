@@ -69,6 +69,10 @@ class _RepResult:
     column_recall: float | None
     column_jaccard: float | None
     reference: ReferenceTable | None  # None for fixture/error/oversize
+    # Measureless-gold dedup fields (PRD-mqoeval-dimension-distinct-gold-dedup)
+    gold_deduped: bool = False
+    gold_rows_pre: int | None = None
+    gold_rows_post: int | None = None
 
 
 def _score_one_rep(
@@ -114,6 +118,7 @@ def _score_one_rep(
     result = score_case(
         reference, answer, pass_threshold=pass_threshold,
         equiv=equiv, value_equiv=value_equiv,
+        gold_sql=query.expected_sql,
     )
 
     row_recall: float | None = None
@@ -138,6 +143,9 @@ def _score_one_rep(
         column_recall=column_recall,
         column_jaccard=column_jaccard,
         reference=ref_table,
+        gold_deduped=result.gold_deduped,
+        gold_rows_pre=result.gold_rows_pre,
+        gold_rows_post=result.gold_rows_post,
     )
 
 
@@ -285,12 +293,18 @@ def run_corpus(
         cli_catalog: str = config.get("catalog_name", "atscale_catalogs")
         cli_model: str = config.get("model_name", "tpcds_benchmark_model")
         cli_timeout: int = int(config.get("cli_timeout_s", 120))
+        cli_extra_args: list[str] = list(config.get("cli_extra_args", []))
+        # When direct PGWire creds are available, skip the OIDC path which
+        # is rejected by AtScale PGWire for service tokens.
+        if "ATSCALE_PG_PASS" in os.environ and "--pg-pass-env" not in cli_extra_args:
+            cli_extra_args = ["--pg-pass-env", "ATSCALE_PG_PASS"] + cli_extra_args
         cli_cfg = CliOracleConfig(
             gold_query_cmd=gold_query_cmd,
             endpoint=cli_endpoint,
             catalog_name=cli_catalog,
             model_name=cli_model,
             timeout_s=cli_timeout,
+            extra_args=cli_extra_args,
         )
         cli_precheck(cli_cfg)  # raises RuntimeError on failure → propagates up
         pgwire_cfg = cli_cfg
@@ -342,6 +356,11 @@ def run_corpus(
         t0 = time.monotonic()
         rep_verdicts_list: list[str] | None = None
 
+        # Dedup fields accumulated across reps (last-rep value used for single rep)
+        agg_gold_deduped: bool = False
+        agg_gold_rows_pre: int | None = None
+        agg_gold_rows_post: int | None = None
+
         if repeat == 1:
             rep = _score_one_rep(
                 agent_entry, q, corpus.context, model,
@@ -356,6 +375,9 @@ def run_corpus(
             column_jaccard = rep.column_jaccard
             diag = _build_diagnostic_fields(rep.answer, rep.reference)
             answer_type = answer.answer_type if answer is not None else None
+            agg_gold_deduped = rep.gold_deduped
+            agg_gold_rows_pre = rep.gold_rows_pre
+            agg_gold_rows_post = rep.gold_rows_post
         else:
             # k-of-n: run repeat times, aggregate
             rep_verdicts_list = []
@@ -398,11 +420,15 @@ def run_corpus(
             column_jaccard = (
                 sum(agg_column_jaccard) / len(agg_column_jaccard) if agg_column_jaccard else None
             )
-            # Use the last rep's data for diagnostic samples
+            # Use the last rep's data for diagnostic samples and dedup fields
             diag = _build_diagnostic_fields(
                 last_rep.answer if last_rep else None,
                 last_rep.reference if last_rep else None,
             )
+            # Dedup fields: use last rep (dedup is deterministic; same gold SQL → same result)
+            agg_gold_deduped = last_rep.gold_deduped if last_rep else False
+            agg_gold_rows_pre = last_rep.gold_rows_pre if last_rep else None
+            agg_gold_rows_post = last_rep.gold_rows_post if last_rep else None
 
         latency_ms = int((time.monotonic() - t0) * 1000)
         record.cases.append(
@@ -425,6 +451,9 @@ def run_corpus(
                 row_count_candidate=diag.get("row_count_candidate"),
                 row_count_reference=diag.get("row_count_reference"),
                 sample_truncated=diag.get("sample_truncated"),
+                gold_deduped=agg_gold_deduped if agg_gold_deduped else None,
+                gold_rows_pre=agg_gold_rows_pre,
+                gold_rows_post=agg_gold_rows_post,
             )
         )
 
