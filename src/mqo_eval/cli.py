@@ -47,6 +47,9 @@ def _cmd_run(args: argparse.Namespace) -> int:
         "min_pass_reps": (
             args.min_pass_reps if args.min_pass_reps is not None else args.repeat
         ),
+        # Selective-retest policy (PRD-mqoeval-selective-retest)
+        "skip_stable": args.skip_stable,  # None = off (default)
+        "full_every": args.full_every,
     }
 
     if corpus.active:
@@ -56,6 +59,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
         )
     else:
         print("no active cases (all disabled)")
+
+    if args.skip_stable is not None:
+        print(
+            f"selective-retest: --skip-stable {args.skip_stable} "
+            f"--full-every {args.full_every}"
+        )
 
     record, dest = run_corpus(
         corpus=corpus,
@@ -70,9 +79,16 @@ def _cmd_run(args: argparse.Namespace) -> int:
     if s.active == 0:
         print("summary: no active cases")
     else:
+        # R6: label pass rate with tested/carried split when selective-retest is active
+        if s.carried > 0:
+            pass_rate_label = (
+                f"pass rate: {s.correct}/{s.active} ({s.accuracy:.0%})"
+                f" — {s.tested} tested, {s.carried} carried"
+            )
+        else:
+            pass_rate_label = f"pass rate: {s.correct}/{s.active} ({s.accuracy:.0%})"
         print(
-            f"summary: {s.correct}/{s.active} correct "
-            f"({s.accuracy:.0%}) | wrong={s.wrong} no_bind={s.no_bind} "
+            f"summary: {pass_rate_label} | wrong={s.wrong} no_bind={s.no_bind} "
             f"parse_errors={s.parse_errors} skipped={s.skipped}"
         )
     print(f"record: {dest}")
@@ -91,11 +107,23 @@ def _cmd_summary(args: argparse.Namespace) -> int:
         print("no active cases")
         return 0
     pct = f"{summary.get('accuracy', 0):.0%}"
-    print(f"pass rate:   {summary.get('correct', 0)}/{active} ({pct})")
+    correct = summary.get("correct", 0)
+    tested = summary.get("tested", 0)
+    carried = summary.get("carried", 0)
+    if carried > 0:
+        pass_rate_line = (
+            f"pass rate:   {correct}/{active} ({pct})"
+            f" — {tested} tested, {carried} carried"
+        )
+    else:
+        pass_rate_line = f"pass rate:   {correct}/{active} ({pct})"
+    print(pass_rate_line)
     print(f"wrong:       {summary.get('wrong', 0)}")
     print(f"no_bind:     {summary.get('no_bind', 0)}")
     print(f"parse_error: {summary.get('parse_errors', 0)}")
     print(f"skipped:     {summary.get('skipped', 0)}")
+    if carried > 0:
+        print(f"carried:     {carried}")
     recall = summary.get("mean_row_recall")
     if recall is not None:
         print(f"mean_recall: {recall:.3f}")
@@ -181,6 +209,28 @@ def _build_parser() -> argparse.ArgumentParser:
         help=(
             "AtScale PGWire endpoint (host:port) passed to mqo-pg-query "
             "(only used with --oracle cli)"
+        ),
+    )
+    run_p.add_argument(
+        "--skip-stable",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "Skip cases with N consecutive correct verdicts in the archive "
+            "(carry forward their last result). Off by default. "
+            "Use with --full-every to set recalibration cadence."
+        ),
+    )
+    run_p.add_argument(
+        "--full-every",
+        type=int,
+        default=5,
+        metavar="M",
+        help=(
+            "Force a full run (no skips) every M runs, for recalibration. "
+            "Default: 5. Set to 0 to disable cadence (skip whenever streak qualifies). "
+            "Only used when --skip-stable is set."
         ),
     )
 

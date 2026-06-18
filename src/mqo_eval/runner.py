@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import time
@@ -11,6 +12,7 @@ from typing import Any
 
 from .contract import AgentAnswer, ParseError, TabularAnswer, parse_answer
 from .corpus import Corpus, Query
+from .history import load_pass_history, prior_run_count
 from .oracle_cli import CliOracleConfig, cli_precheck, execute_golden_cli
 from .oracle_pgwire import (
     PgwireConfig,
@@ -33,9 +35,6 @@ def _invoke_agent(entry: AgentEntry, query: Query, context: str, model: str) -> 
         "context": context,
         "case_id": query.id,
     }
-    import json
-    import os
-
     env = os.environ.copy()
     env["MQO_EVAL_CASE"] = json.dumps(env_input)
 
@@ -176,6 +175,63 @@ def _build_diagnostic_fields(
     return fields
 
 
+def _find_carried_case_record(
+    results_dir: Path,
+    corpus_id: str,
+    agent: str,
+    server: str,
+    case_id: str,
+) -> tuple[CaseRecord, str] | None:
+    """Find the most recent archived CaseRecord with verdict==correct for case_id.
+
+    Returns (CaseRecord, run_id) or None if not found.
+    """
+    archive_dir = results_dir / agent / server / corpus_id
+    if not archive_dir.is_dir():
+        return None
+
+    candidates: list[tuple[str, Path]] = []
+    for path in archive_dir.glob("*.json"):
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if (
+            obj.get("agent") == agent
+            and obj.get("server") == server
+            and obj.get("corpus_id") == corpus_id
+        ):
+            candidates.append((obj.get("started_at", ""), path))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda t: t[0], reverse=True)
+
+    for _started_at, path in candidates:
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        run_id = obj.get("run_id", "")
+        for case_dict in obj.get("cases", []):
+            if case_dict.get("id") == case_id and case_dict.get("verdict") == "correct":
+                return (
+                    CaseRecord(
+                        id=case_dict["id"],
+                        nl_query=case_dict.get("nl_query", ""),
+                        verdict="skipped-stable",
+                        row_recall=case_dict.get("row_recall"),
+                        column_recall=case_dict.get("column_recall"),
+                        column_jaccard=case_dict.get("column_jaccard"),
+                        jaccard=case_dict.get("jaccard"),
+                        carried_from_run_id=run_id,
+                    ),
+                    run_id,
+                )
+    return None
+
+
 def run_corpus(
     corpus: Corpus,
     agent_entry: AgentEntry,
@@ -192,6 +248,10 @@ def run_corpus(
     min_pass_reps: int = (
         int(min_pass_reps_cfg) if min_pass_reps_cfg is not None else repeat
     )
+
+    # Selective-retest policy parameters (PRD-mqoeval-selective-retest)
+    skip_stable: int | None = config.get("skip_stable")  # None = off (default)
+    full_every: int = int(config.get("full_every", 5))
 
     corpus_id = corpus.path.stem
     record, _ = new_record(
@@ -235,12 +295,50 @@ def run_corpus(
         cli_precheck(cli_cfg)  # raises RuntimeError on failure → propagates up
         pgwire_cfg = cli_cfg
 
-    # Skipped cases
+    # Skipped cases (disabled in corpus — verdict="skipped", not "skipped-stable")
     for q in corpus.skipped:
         record.cases.append(CaseRecord(id=q.id, nl_query=q.nl_query, verdict="skipped"))
 
-    # Active cases
-    for q in corpus.active:
+    # Selective-retest: determine which active cases to test vs. carry forward
+    # Off by default (R2): skip_stable=None → full run, current behavior unchanged
+    to_test: list[Query] = list(corpus.active)
+    to_carry_records: list[CaseRecord] = []
+
+    if skip_stable is not None and skip_stable >= 1:
+        # Check R4: force full run every M runs (recalibration cadence)
+        prior_count = prior_run_count(results_dir, corpus_id, agent_entry.name, server)
+        force_full = full_every >= 1 and prior_count > 0 and (prior_count % full_every == 0)
+
+        if not force_full:
+            # Load pass history for the newest skip_stable runs
+            streaks = load_pass_history(
+                results_dir, corpus_id, agent_entry.name, server, skip_stable
+            )
+
+            new_to_test: list[Query] = []
+            for q in corpus.active:
+                streak = streaks.get(q.id, 0)
+                if streak >= skip_stable:
+                    # Case is eligible to skip — carry it forward (R1/R5)
+                    carried = _find_carried_case_record(
+                        results_dir, corpus_id, agent_entry.name, server, q.id
+                    )
+                    if carried is not None:
+                        to_carry_records.append(carried[0])
+                    else:
+                        # No carried record found; test it anyway (R3 spirit)
+                        new_to_test.append(q)
+                else:
+                    # Not stable enough OR most recent verdict != correct (R3)
+                    new_to_test.append(q)
+            to_test = new_to_test
+
+    # Append carried records (skipped-stable) first so they're in the output
+    for cr in to_carry_records:
+        record.cases.append(cr)
+
+    # Active cases — only the ones we're actually testing this cycle
+    for q in to_test:
         t0 = time.monotonic()
         rep_verdicts_list: list[str] | None = None
 
