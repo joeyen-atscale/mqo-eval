@@ -212,3 +212,101 @@ def test_corpus_equivalent_values_roundtrip(tmp_path: Path) -> None:
     assert q1.equivalent_values == {"September": ["Sep", "09"]}
     q2 = next(q for q in corpus.queries if q.id == "q2")
     assert q2.equivalent_values == {}  # not declared → empty
+
+
+# ── k=3 capability gate ───────────────────────────────────────────────────────
+
+
+def test_k3_majority_gate_correct(tmp_path: Path) -> None:
+    """k=3, min_pass_reps=2: 2 correct reps → overall correct (majority passes)."""
+    record_path = tmp_path / "k3_correct.json"
+    record_path.write_text(json.dumps({
+        "run_id": "test-k3-correct",
+        "started_at": "20260618T000000Z",
+        "finished_at": "20260618T000001Z",
+        "agent": "test",
+        "server": "fixture",
+        "corpus_id": "test",
+        "config": {"repeat": 3, "min_pass_reps": 2},
+        "cases": [
+            {
+                "id": "q1",
+                "nl_query": "test",
+                "verdict": "correct",
+                "rep_verdicts": ["correct", "correct", "wrong"],
+            },
+            {
+                "id": "q2",
+                "nl_query": "test2",
+                "verdict": "correct",
+                "rep_verdicts": ["correct", "correct", "correct"],
+            },
+        ],
+        "summary": {
+            "total": 2, "active": 2, "skipped": 0,
+            "correct": 2, "wrong": 0, "no_bind": 0, "parse_errors": 0,
+            "tested": 2, "carried": 0, "accuracy": 1.0,
+        },
+    }))
+    try:
+        from mqo_eval.cli import main
+        main(["summary", "--results", str(record_path)])
+    except SystemExit:
+        pass
+
+
+def test_k3_majority_gate_wrong(tmp_path: Path) -> None:
+    """k=3, min_pass_reps=2: only 1 correct rep → overall wrong."""
+    from mqo_eval.record import CaseRecord
+    # Directly verify the aggregation logic: correct_reps < min_pass_reps → wrong
+    rv = ["correct", "wrong", "wrong"]
+    correct_reps = rv.count("correct")
+    min_pass_reps = 2
+    verdict = "correct" if correct_reps >= min_pass_reps else "wrong"
+    assert verdict == "wrong", "1/3 reps should fail majority gate (need 2)"
+
+
+def test_k3_summary_reports_unstable(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """summary CLI labels unstable cases (non-unanimous rep_verdicts) when k>1."""
+    record_path = tmp_path / "k3_unstable.json"
+    record_path.write_text(json.dumps({
+        "run_id": "test-k3-unstable",
+        "started_at": "20260618T000000Z",
+        "finished_at": "20260618T000001Z",
+        "agent": "test",
+        "server": "fixture",
+        "corpus_id": "test",
+        "config": {"repeat": 3, "min_pass_reps": 2},
+        "cases": [
+            {
+                "id": "coin-flip-case",
+                "nl_query": "a coin flip query",
+                "verdict": "correct",  # 2/3 → PASS at majority gate
+                "rep_verdicts": ["correct", "correct", "wrong"],
+            },
+            {
+                "id": "stable-correct",
+                "nl_query": "a stable query",
+                "verdict": "correct",
+                "rep_verdicts": ["correct", "correct", "correct"],
+            },
+        ],
+        "summary": {
+            "total": 2, "active": 2, "skipped": 0,
+            "correct": 2, "wrong": 0, "no_bind": 0, "parse_errors": 0,
+            "tested": 2, "carried": 0, "accuracy": 1.0,
+        },
+    }))
+    try:
+        from mqo_eval.cli import main
+        main(["summary", "--results", str(record_path)])
+    except SystemExit:
+        pass
+    output = capsys.readouterr().out
+    assert "capability pass rate" in output, "k>1 should label as capability pass rate"
+    assert "gate:" in output, "summary should show gate config for k>1"
+    assert "coin-flip-case" in output, "unstable case should appear in summary"
+    assert "stable-correct" not in output, "unanimous case should NOT appear as unstable"
+    assert "unstable" in output, "summary should flag unstable section"

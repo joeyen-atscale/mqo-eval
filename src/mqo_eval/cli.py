@@ -101,6 +101,9 @@ def _cmd_summary(args: argparse.Namespace) -> int:
         print(f"error: results file not found: {path}", file=sys.stderr)
         return 1
     data = json.loads(path.read_text())
+    cfg = data.get("config", {})
+    repeat = int(cfg.get("repeat", 1))
+    min_pass_reps = int(cfg.get("min_pass_reps", repeat))
     summary = data.get("summary", {})
     active = summary.get("active", 0)
     if active == 0:
@@ -110,14 +113,18 @@ def _cmd_summary(args: argparse.Namespace) -> int:
     correct = summary.get("correct", 0)
     tested = summary.get("tested", 0)
     carried = summary.get("carried", 0)
+    # Label as "capability pass rate" when k>1 to distinguish from single-shot
+    rate_label = "capability pass rate" if repeat > 1 else "pass rate"
     if carried > 0:
         pass_rate_line = (
-            f"pass rate:   {correct}/{active} ({pct})"
+            f"{rate_label}: {correct}/{active} ({pct})"
             f" — {tested} tested, {carried} carried"
         )
     else:
-        pass_rate_line = f"pass rate:   {correct}/{active} ({pct})"
+        pass_rate_line = f"{rate_label}: {correct}/{active} ({pct})"
     print(pass_rate_line)
+    if repeat > 1:
+        print(f"gate:        k={repeat}, min_pass_reps={min_pass_reps}")
     print(f"wrong:       {summary.get('wrong', 0)}")
     print(f"no_bind:     {summary.get('no_bind', 0)}")
     print(f"parse_error: {summary.get('parse_errors', 0)}")
@@ -130,6 +137,23 @@ def _cmd_summary(args: argparse.Namespace) -> int:
     jaccard = summary.get("mean_row_jaccard")
     if jaccard is not None:
         print(f"mean_jaccard: {jaccard:.3f}")
+    # When k>1: list unstable cases (non-unanimous rep_verdicts) as next-build targets
+    if repeat > 1:
+        cases = data.get("cases", [])
+        unstable = []
+        for c in cases:
+            rv = c.get("rep_verdicts")
+            if rv and len(rv) > 1 and len(set(rv)) > 1:
+                verdict_str = "".join("+" if v == "correct" else "-" for v in rv)
+                correct_cnt = rv.count("correct")
+                gate = "PASS" if correct_cnt >= min_pass_reps else "FAIL"
+                unstable.append(f"  {c['id']} [{verdict_str}] {gate}")
+        if unstable:
+            print(f"unstable:    {len(unstable)} case(s) with mixed reps (next-build targets):")
+            for line in unstable:
+                print(line)
+        else:
+            print("unstable:    none (all reps unanimous)")
     return 0
 
 
