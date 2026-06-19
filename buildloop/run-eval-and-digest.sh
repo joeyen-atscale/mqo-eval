@@ -22,7 +22,7 @@ if [[ -e "$STOP" ]]; then
   exit 0
 fi
 
-# Load credentials
+# Load credentials — base layer (may be overridden by docker-local.env below)
 if [[ -f "$HOME/projects/mqo-demo/.env" ]]; then
   set -a; source "$HOME/projects/mqo-demo/.env"; set +a
 fi
@@ -30,19 +30,21 @@ if [[ -f "$HOME/.config/mcp-watch/secrets.env" ]]; then
   set -a; source "$HOME/.config/mcp-watch/secrets.env"; set +a
 fi
 
-# Tell mqo-pg-query to use direct PGWire password (bypasses OIDC service token)
-export ATSCALE_PG_PASS_ENV=ATSCALE_PG_PASS
+# Docker / Community Edition overrides — takes precedence over mqo-demo/.env.
+# Edit buildloop/docker-local.env to set your Community Edition credentials and
+# catalog/model names before running against the local Docker stack.
+if [[ -f "$SCRIPT_DIR/docker-local.env" ]]; then
+  set -a; source "$SCRIPT_DIR/docker-local.env"; set +a
+fi
 
 # Tell the claude-oauth agent where the catalog snapshot lives
 export MQO_CATALOG_PATH="$HOME/projects/mqo-mcp/mqo-mcp-server/fixtures/tpcds_catalog.json"
 
-# Live AtScale cluster — required so mqo-mcp-server connects to mcp-aws (not fixture engine)
-export MQO_ENDPOINT="mcp-aws.atscaleinternal.com:15432"
-export MQO_XMLA_URL="https://mcp-aws.atscaleinternal.com/v1/xmla"
-export MQO_OIDC_TOKEN_URL="https://mcp-aws.atscaleinternal.com/auth/realms/atscale/protocol/openid-connect/token"
-export MQO_OIDC_CLIENT_ID="atscale-mcp"
-export MQO_OIDC_REALM="atscale"
-# ATSCALE_OIDC_SECRET is sourced above from secrets.env / mqo-demo/.env
+# Catalog / model name for oracle SQL template substitution.
+# Sourced from docker-local.env (DOCKER_CATALOG_NAME / DOCKER_MODEL_NAME).
+# Fall back to the live-cluster defaults if not set.
+CATALOG_NAME="${DOCKER_CATALOG_NAME:-'"atscale_catalogs"."tpcds_Snowflake"'}"
+MODEL_NAME="${DOCKER_MODEL_NAME:-'"tpcds_benchmark_model"'}"
 
 START_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 echo "$START_TS eval start"
@@ -51,21 +53,18 @@ cd "$EVAL_DIR"
 
 TMPOUT="$(mktemp)"
 EVAL_EXIT=0
-# k=3 capability gate: each case runs 3 times; correct iff ≥2/3 reps pass (majority).
-# --skip-stable 3: cases with 3 consecutive prior correct runs are carried forward
-# (selective-retest, shipped), bounding total agent calls to ~30 instead of 60.
 uv run mqo-eval run \
   --corpus corpus/tpcds_sql_derived_limited.yaml \
   --agent claude-oauth \
-  --server mcp-aws-live \
-  --oracle cli \
+  --server docker-local \
+  --oracle pgwire \
+  --pg-host localhost \
+  --pg-sslmode disable \
   --pg-pass-env ATSCALE_PG_PASS \
-  --catalog-name '"atscale_catalogs"."tpcds_Snowflake"' \
-  --model-name '"tpcds_benchmark_model"' \
+  --catalog-name "$CATALOG_NAME" \
+  --model-name "$MODEL_NAME" \
   --results-dir "$RESULTS_DIR" \
-  --repeat 3 \
-  --min-pass-reps 2 \
-  --skip-stable 3 2>&1 | tee "$TMPOUT" || EVAL_EXIT=$?
+  --repeat 1 2>&1 | tee "$TMPOUT" || EVAL_EXIT=$?
 
 END_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 
@@ -119,7 +118,7 @@ PYEOF
   echo ""
   echo "## Run — $START_TS → $END_TS"
   echo "- Record: $RECORD_PATH"
-  echo "- Gate: k=3, min_pass_reps=2 (majority), skip_stable=3"
+  echo "- Gate: k=1"
   echo ""
   echo '```'
   echo "$SUMMARY"

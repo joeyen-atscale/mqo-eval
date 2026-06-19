@@ -278,11 +278,13 @@ def run_corpus(
         model_name: str = config.get("model_name", "tpcds_benchmark_model")
         pg_user: str = config.get("pg_user") or os.environ.get("ATSCALE_PG_USER", "atscale")
         pg_dbname: str = config.get("pg_dbname", "atscale_catalogs")
+        pg_sslmode: str = config.get("pg_sslmode", "require")
         pgwire_cfg = PgwireConfig(
             pg_host=pg_host,
             pg_user=pg_user,
             pg_pass_env=pg_pass_env,
             pg_dbname=pg_dbname,
+            sslmode=pg_sslmode,
             catalog_name=catalog_name,
             model_name=model_name,
         )
