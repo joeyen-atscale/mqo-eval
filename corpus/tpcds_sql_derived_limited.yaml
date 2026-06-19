@@ -1,6 +1,6 @@
 context: |
   All questions concern the TPC-DS benchmark dataset. Use the model
-  "atscale_catalogs"."tpcds_Databricks"."tpcds_benchmark_model" exclusively to write PgSql queries.
+  tpcds_benchmark_model exclusively to write PgSql queries.
   The server also hosts unrelated models (e.g. AdventureWorks: ASAdventureSmall,
   ResellerPerspective) — do not query those; their data will produce wrong
   answers for these questions. The system groups automatically the queries by the dimensions, so
