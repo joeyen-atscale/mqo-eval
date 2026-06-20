@@ -45,7 +45,7 @@ def _invoke_agent(entry: AgentEntry, query: Query, context: str, model: str) -> 
         capture_output=True,
         text=True,
         env=env,
-        timeout=360,
+        timeout=660,
     )
     return result.stdout
 

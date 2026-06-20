@@ -36,7 +36,7 @@ Emit ONLY the JSON object as the last line of your response. No markdown fences 
 class ClaudeOAuthConfig:
     catalog_path: str = ""          # path to mqo-mcp-server catalog JSON
     model: str = field(default_factory=lambda: os.environ.get("MQO_CLAUDE_MODEL", "claude-haiku-4-5-20251001"))
-    timeout_s: float = 300.0
+    timeout_s: float = 600.0
     mcp_timeout_ms: int = 60_000    # MCP_TIMEOUT env var for stdio server startup
     extra_args: list[str] = field(default_factory=list)
 
