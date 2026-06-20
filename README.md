@@ -82,6 +82,39 @@ Agents are registered in `agents.yaml` by name. The bundled ones:
 
 Point `--agent` at any of these, or add your own subprocess to `agents.yaml`.
 
+## Rule-violation harness
+
+A separate, deterministic sub-harness measures per-rule query-syntax violation rates for the AtScale semantic-layer query rules. It does not call an LLM and does not require a live AtScale cluster — it runs SQL-text-only checks against a labeled corpus.
+
+**When to use it:** after migrating a rule from LLM prose to a server validator, to confirm the enforcement gate works and to capture a before/after delta. It is also the CI regression gate that fails the build when a previously-migrated rule's admission rate climbs back above its configured floor.
+
+```bash
+# Print a per-rule summary table (never exits 1, for report mode):
+uv run python -m mqo_eval.rule_ci_floor --report-only
+
+# Enforce floors (fails with exit 1 on regression):
+uv run python -m mqo_eval.rule_ci_floor
+
+# Single rule only:
+uv run python -m mqo_eval.rule_ci_floor --rule R-MS
+
+# Emit structured JSON alongside the table:
+uv run python -m mqo_eval.rule_ci_floor --json /tmp/rule-report.json --report-only
+```
+
+The output columns are:
+
+| Column | Meaning |
+| --- | --- |
+| `Admiss.Rate` | Fraction of *violating* corpus cases that the checker lets through (lower is better; 0 % = all violations caught). |
+| `FP.Rate` | Fraction of *conforming* corpus cases that are incorrectly rejected (lower is better). |
+| `Floor` | Configured maximum tolerated admission rate for this rule (per `RULE_FLOORS` in `rule_ci_floor.py`). |
+| `Status` | `PASS`, `FAIL (>floor)`, or `N/A (no violating cases)`. |
+
+The corpus lives in `corpus/rule_violations/` (one `cases.yaml` + one `rules.yaml`). Each case declares the rule(s) it exercises, whether it is a `violating` or `conforming` case, and whether it requires LLM judgment (`lm_driven: true`). LLM-driven cases are counted as skipped and never contribute to the hard CI floor, keeping the gate deterministic (NFR3).
+
+The harness also checks for a live eval tick lock before starting and refuses to run concurrently with the MQO-arm eval, preventing shared-API contention (FR7).
+
 ## Where it fits
 
 `mqo-eval` is the scoring end of the MQO loop. `mqo-mcp` serves the AtScale semantic layer to an agent over MCP; this harness measures how well that agent answers. The `buildloop/` directory holds the closed-loop driver — run the corpus, digest the result into `ledger.md`, feed the gaps into the next build cycle.
