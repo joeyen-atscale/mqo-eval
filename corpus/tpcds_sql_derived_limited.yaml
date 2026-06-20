@@ -43,6 +43,12 @@ queries:
       FROM ${CatalogName}.${ModelName}
       WHERE "Warehouse City" = 'Fairview';
     disabled: false
+    equivalent_attributes:
+      - ["Warehouse Square Feet", "Square Footage", "square footage", "Sq Ft",
+         "SquareFootage", "Warehouse Sq Ft"]
+        # why: agent uses natural shorthand for the display label "Warehouse Square Feet"
+      # NOTE: gold reference contains a null-row (NULL warehouse name) that CE SQL
+      # backend suppresses — row_recall may be 0.8 even with correct data.
 
   - id: large-warehouses
     nl_query: "What is the name of each warehouse with more than 140000 square feet of space?"
@@ -117,6 +123,10 @@ queries:
       ORDER BY "Store Number of Employees" DESC, "Store Name" ASC
       LIMIT 20;
     disabled: false
+    equivalent_attributes:
+      - ["Store Number of Employees", "Number of Employees", "Employee Count",
+         "Employees", "Store Employees", "Num Employees"]
+        # why: agent omits "Store" prefix; semantic intent is unambiguous
 
   # LIMITED: per-product returns (was hitting the 200k row cap) -> top 20.
   - id: store-returns-per-product
