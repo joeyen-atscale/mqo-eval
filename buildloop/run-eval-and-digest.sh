@@ -73,18 +73,14 @@ if [[ -f "$GOLD_FILE" ]]; then
     --results-dir "$RESULTS_DIR" \
     --repeat 1 2>&1 | tee "$TMPOUT" || EVAL_EXIT=$?
 else
-  # Fallback: live pgwire oracle (slow — run mint-gold.py first)
-  echo "WARNING: gold_docker-local.json not found, falling back to slow pgwire oracle"
+  # Fallback: live CLI oracle (shells mqo-pg-query — must be installed in Phase 3)
+  # NOTE: --oracle pgwire (psycopg2) is dead against AtScale PGWire and scores 0; never use it.
+  echo "WARNING: gold_docker-local.json not found, falling back to cli oracle (mqo-pg-query)"
   uv run mqo-eval run \
     --corpus corpus/tpcds_sql_derived_limited.yaml \
     --agent claude-oauth \
     --server docker-local \
-    --oracle pgwire \
-    --pg-host localhost \
-    --pg-sslmode disable \
-    --pg-user "$PG_USER" \
-    --pg-dbname "$PG_DBNAME" \
-    --pg-pass-env ATSCALE_PG_PASS \
+    --oracle cli \
     --catalog-name "$CATALOG_NAME" \
     --model-name "$MODEL_NAME" \
     --results-dir "$RESULTS_DIR" \
@@ -138,7 +134,43 @@ else:
 PYEOF
 )"
 
-# Append ledger entry
+# Haiku digest — analyze failures and write concrete hypotheses inline.
+# Never leave this as a placeholder; if claude fails, write the error so it's visible.
+FAILING_CASES="$(python3 - "$RECORD_PATH" <<'PYEOF'
+import json, sys
+data = json.load(open(sys.argv[1]))
+lines = []
+for c in data.get('cases', []):
+    if c.get('verdict') not in ('correct', 'skipped'):
+        j  = c.get('jaccard'); rr = c.get('row_recall'); cj = c.get('column_jaccard')
+        d  = (c.get('detail') or '')[:300].replace('\n', ' ')
+        ca = c.get('candidate_columns') or []; re = c.get('reference_columns') or []
+        lines.append(f"- {c['id']}: j={j} rr={rr} cj={cj}")
+        if d:    lines.append(f"  {d}")
+        if ca != re: lines.append(f"  cand_cols={ca}  ref_cols={re}")
+print('\n'.join(lines) if lines else '(no failures — all passed or skipped)')
+PYEOF
+)"
+
+HYPOTHESES="$(timeout 90 claude -p \
+"MQO eval — give terse root-cause hypotheses for each failure, then list top 2 next-DREAM PRD targets.
+
+Pass rate:
+$SUMMARY
+
+Failing cases:
+$FAILING_CASES
+
+Format (plain text, no markdown, ≤20 lines total):
+<case-id>: <one-line root cause>
+...
+NEXT DREAM: <PRD-filename-stem>: <one-line rationale>" \
+  --model claude-haiku-4-5-20251001 \
+  --output-format text \
+  --max-turns 1 \
+  2>/dev/null || echo "(digest failed — manually review: uv run mqo-eval summary --results $RECORD_PATH)")"
+
+# Append ledger entry — hypotheses always filled in, never left pending
 {
   echo ""
   echo "## Run — $START_TS → $END_TS"
@@ -154,8 +186,20 @@ PYEOF
   echo "$UNSTABLE_CASES"
   echo '```'
   echo ""
-  echo "- Hypotheses: (pending — Haiku digest)"
+  echo "- Hypotheses:"
+  echo "$HYPOTHESES" | sed 's/^/  /'
 } >> "$LEDGER"
 
 echo "LEDGER_WRITTEN"
 echo "$END_TS ledger appended"
+
+# Chain trigger — re-ignite the buildloop service so the next iteration starts immediately.
+# The STOP sentinel is checked at service start (ExecCondition), so this is always safe to fire.
+# If systemctl is unavailable (e.g. non-systemd env), log and continue — don't abort.
+if command -v systemctl &>/dev/null; then
+  systemctl --user start mqo-buildloop.service 2>&1 \
+    && echo "$END_TS chain: re-triggered mqo-buildloop.service" \
+    || echo "$END_TS chain: WARNING — failed to re-trigger mqo-buildloop.service (check systemctl --user status)"
+else
+  echo "$END_TS chain: systemctl not available — re-ignite manually"
+fi
