@@ -21,6 +21,7 @@ from .oracle_pgwire import (
     pgwire_precheck,
     substitute_placeholders,
 )
+from .oracle_precomputed import PrecomputedConfig, execute_golden_precomputed
 from .record import ROW_SAMPLE_CAP, CaseRecord, RunRecord, new_record, write_record
 from .registry import AgentEntry
 from .scoring import score_case
@@ -81,7 +82,7 @@ def _score_one_rep(
     context: str,
     model: str,
     oracle_mode: str,
-    cfg: PgwireConfig | CliOracleConfig | None,
+    cfg: PgwireConfig | CliOracleConfig | PrecomputedConfig | None,
     pass_threshold: float,
 ) -> _RepResult:
     """Invoke agent once and score, returning diagnostic fields."""
@@ -100,7 +101,10 @@ def _score_one_rep(
 
     assert cfg is not None  # precheck already ran; cfg is set
 
-    if oracle_mode == "pgwire":
+    if oracle_mode == "precomputed":
+        assert isinstance(cfg, PrecomputedConfig)
+        reference = execute_golden_precomputed(cfg._cache, query.id)
+    elif oracle_mode == "pgwire":
         assert isinstance(cfg, PgwireConfig)
         substituted_sql = substitute_placeholders(
             query.expected_sql,
@@ -270,8 +274,15 @@ def run_corpus(
     )
 
     # Build oracle config and run precheck once (fast-fail before case loop)
-    pgwire_cfg: PgwireConfig | CliOracleConfig | None = None
-    if oracle_mode == "pgwire":
+    pgwire_cfg: PgwireConfig | CliOracleConfig | PrecomputedConfig | None = None
+    if oracle_mode == "precomputed":
+        gold_file_str: str = config.get("gold_file", "")
+        if not gold_file_str:
+            raise RuntimeError("--oracle precomputed requires --gold-file <path>")
+        pre_cfg = PrecomputedConfig(gold_file=Path(gold_file_str))
+        pre_cfg._cache = pre_cfg.load()  # type: ignore[attr-defined]
+        pgwire_cfg = pre_cfg
+    elif oracle_mode == "pgwire":
         pg_host: str = config.get("pg_host", "localhost")
         pg_pass_env: str = config.get("pg_pass_env", "ATSCALE_PG_PASS")
         catalog_name: str = config.get("catalog_name", "atscale_catalogs")

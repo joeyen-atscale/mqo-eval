@@ -45,26 +45,51 @@ export MQO_CATALOG_PATH="$HOME/projects/mqo-mcp/mqo-mcp-server/fixtures/tpcds_ca
 # Fall back to the live-cluster defaults if not set.
 CATALOG_NAME="${DOCKER_CATALOG_NAME:-'"atscale_catalogs"."tpcds_Snowflake"'}"
 MODEL_NAME="${DOCKER_MODEL_NAME:-'"tpcds_benchmark_model"'}"
+PG_DBNAME="${DOCKER_PG_DBNAME:-atscale_catalogs}"
+PG_USER="${ATSCALE_PG_USER:-atscale}"
+
+# Haiku for eval cases (cheaper + faster; Sonnet only if MQO_CLAUDE_MODEL overrides)
+export MQO_CLAUDE_MODEL="${MQO_CLAUDE_MODEL:-claude-haiku-4-5-20251001}"
 
 START_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 echo "$START_TS eval start"
 
 cd "$EVAL_DIR"
 
+GOLD_FILE="$SCRIPT_DIR/../corpus/gold_docker-local.json"
 TMPOUT="$(mktemp)"
 EVAL_EXIT=0
-uv run mqo-eval run \
-  --corpus corpus/tpcds_sql_derived_limited.yaml \
-  --agent claude-oauth \
-  --server docker-local \
-  --oracle pgwire \
-  --pg-host localhost \
-  --pg-sslmode disable \
-  --pg-pass-env ATSCALE_PG_PASS \
-  --catalog-name "$CATALOG_NAME" \
-  --model-name "$MODEL_NAME" \
-  --results-dir "$RESULTS_DIR" \
-  --repeat 1 2>&1 | tee "$TMPOUT" || EVAL_EXIT=$?
+
+if [[ -f "$GOLD_FILE" ]]; then
+  # Fast path: pre-minted gold, no live oracle needed
+  uv run mqo-eval run \
+    --corpus corpus/tpcds_sql_derived_limited.yaml \
+    --agent claude-oauth \
+    --server docker-local \
+    --oracle precomputed \
+    --gold-file "$GOLD_FILE" \
+    --catalog-name "$CATALOG_NAME" \
+    --model-name "$MODEL_NAME" \
+    --results-dir "$RESULTS_DIR" \
+    --repeat 1 2>&1 | tee "$TMPOUT" || EVAL_EXIT=$?
+else
+  # Fallback: live pgwire oracle (slow — run mint-gold.py first)
+  echo "WARNING: gold_docker-local.json not found, falling back to slow pgwire oracle"
+  uv run mqo-eval run \
+    --corpus corpus/tpcds_sql_derived_limited.yaml \
+    --agent claude-oauth \
+    --server docker-local \
+    --oracle pgwire \
+    --pg-host localhost \
+    --pg-sslmode disable \
+    --pg-user "$PG_USER" \
+    --pg-dbname "$PG_DBNAME" \
+    --pg-pass-env ATSCALE_PG_PASS \
+    --catalog-name "$CATALOG_NAME" \
+    --model-name "$MODEL_NAME" \
+    --results-dir "$RESULTS_DIR" \
+    --repeat 1 2>&1 | tee "$TMPOUT" || EVAL_EXIT=$?
+fi
 
 END_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 

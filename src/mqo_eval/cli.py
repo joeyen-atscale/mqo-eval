@@ -43,6 +43,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         "model_name": args.model_name,
         "gold_query_cmd": args.gold_query_cmd,
         "cli_endpoint": args.cli_endpoint,
+        "gold_file": args.gold_file or "",
         "pass_threshold": args.pass_threshold,
         "repeat": args.repeat,
         "min_pass_reps": (
@@ -173,12 +174,17 @@ def _build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--agents-yaml", default="agents.yaml", help="registry file")
     run_p.add_argument(
         "--oracle",
-        choices=["fixture", "pgwire", "cli"],
+        choices=["fixture", "pgwire", "cli", "precomputed"],
         default="fixture",
         help=(
-            "oracle backend: fixture (offline), pgwire (live PGWire/psycopg2), "
-            "or cli (shell out to mqo-pg-query)"
+            "oracle backend: fixture (offline/no scoring), pgwire (live PGWire/psycopg2), "
+            "cli (shell out to mqo-pg-query), or precomputed (pre-minted gold cache JSON)"
         ),
+    )
+    run_p.add_argument(
+        "--gold-file",
+        default=None,
+        help="path to pre-minted gold cache JSON (required with --oracle precomputed)",
     )
     run_p.add_argument(
         "--pg-host",

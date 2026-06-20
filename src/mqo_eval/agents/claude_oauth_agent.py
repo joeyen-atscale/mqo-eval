@@ -35,7 +35,7 @@ Emit ONLY the JSON object as the last line of your response. No markdown fences 
 @dataclass
 class ClaudeOAuthConfig:
     catalog_path: str = ""          # path to mqo-mcp-server catalog JSON
-    model: str = ""  # empty = use claude's default (Opus); set to e.g. "claude-sonnet-4-6" to override
+    model: str = field(default_factory=lambda: os.environ.get("MQO_CLAUDE_MODEL", "claude-haiku-4-5-20251001"))
     timeout_s: float = 300.0
     mcp_timeout_ms: int = 60_000    # MCP_TIMEOUT env var for stdio server startup
     extra_args: list[str] = field(default_factory=list)
@@ -66,6 +66,25 @@ def _build_mcp_config(cfg: ClaudeOAuthConfig) -> dict[str, Any]:
                 args += [flag, val]
         # secret passed by env-var NAME, never as a value
         args += ["--oidc-client-secret-env", os.environ.get("MQO_OIDC_SECRET_ENV", "ATSCALE_OIDC_SECRET")]
+
+        # Optional: direct PGWire credentials (CE / no-OIDC-PGWire mode).
+        # MQO_PG_USER sets --pg-user; MQO_PG_PASS_ENV sets --pg-pass-env (name of the env var
+        # holding the password, not the value itself). Falls back to ATSCALE_PG_USER if set.
+        pg_user = os.environ.get("MQO_PG_USER") or os.environ.get("ATSCALE_PG_USER", "")
+        if pg_user:
+            args += ["--pg-user", pg_user]
+        pg_pass_env = os.environ.get("MQO_PG_PASS_ENV", "")
+        if pg_pass_env:
+            args += ["--pg-pass-env", pg_pass_env]
+
+        # Optional: override backend router for all queries (e.g. "sql" for CE where XMLA is broken).
+        force_backend = os.environ.get("MQO_FORCE_BACKEND", "")
+        if force_backend:
+            args += ["--force-backend", force_backend]
+
+        # Optional: skip the backend capability probe at startup (useful when DAX/MDX are known broken).
+        if os.environ.get("MQO_NO_PROBE", "").lower() in ("1", "true", "yes"):
+            args += ["--no-probe"]
 
     return {
         "mcpServers": {

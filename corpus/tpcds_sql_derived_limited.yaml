@@ -223,11 +223,11 @@ queries:
 
   # LIMITED: customers in New Jersey -> first 20, full ordering spelled out.
   - id: customer-details-new-jersey
-    nl_query: "What is the first name, income band, vehicle count, and buy potential for each customer that lives in the state of New Jersey? Give the first 20 ordered by first name (A→Z), then income band, then vehicle count, then buy potential (all ascending)."
+    nl_query: "What is the first name, income band, vehicle count, and buy potential for each customer that lives in the state of New Jersey? Give the first 20 ordered by income band, then vehicle count, then buy potential, then first name (all ascending)."
     expected_sql: |
       SELECT "Customer First Name", "Income Band", "Vehicle Count", "Customer Buy Potential"
       FROM ${CatalogName}.${ModelName}
       WHERE "Customer State Name" = 'New Jersey'
-      ORDER BY "Customer First Name" ASC, "Income Band" ASC, "Vehicle Count" ASC, "Customer Buy Potential" ASC
+      ORDER BY "Income Band" ASC, "Vehicle Count" ASC, "Customer Buy Potential" ASC, "Customer First Name" ASC
       LIMIT 20;
     disabled: false
