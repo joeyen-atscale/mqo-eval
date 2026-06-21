@@ -54,8 +54,11 @@ MODEL_NAME="${DOCKER_MODEL_NAME:-'"tpcds_benchmark_model"'}"
 PG_DBNAME="${DOCKER_PG_DBNAME:-atscale_catalogs}"
 PG_USER="${ATSCALE_PG_USER:-atscale}"
 
-# Haiku for eval cases (cheaper + faster; Sonnet only if MQO_CLAUDE_MODEL overrides)
-export MQO_CLAUDE_MODEL="${MQO_CLAUDE_MODEL:-claude-haiku-4-5-20251001}"
+# Sonnet for eval cases — Haiku cannot reliably invoke the MQO MCP tools (it
+# confabulates "TLS handshake" declines), capping the score at ~10%. Sonnet drives
+# the tools correctly (10% → 55% headline, ~80% with column-label normalization).
+# Override MQO_CLAUDE_MODEL to test a different agent model. (Digest stays Haiku.)
+export MQO_CLAUDE_MODEL="${MQO_CLAUDE_MODEL:-claude-sonnet-4-6}"
 
 # ── PREFLIGHT GATE ───────────────────────────────────────────────────────────
 # Verify CE + PGWire + the installed binary are healthy BEFORE burning OAuth quota

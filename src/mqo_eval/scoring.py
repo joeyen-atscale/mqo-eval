@@ -129,7 +129,13 @@ def dedup_reference_rows(
 
 
 def _normalize_col(c: str) -> str:
-    return re.sub(r"\s+", " ", c.strip().strip("\"'`").casefold())
+    # Treat snake_case, kebab-case, and Title Case as the same column identity:
+    # the model emits internal measure names ("store_quantity_sold") where the gold
+    # carries friendly labels ("Store Quantity Sold"). Same column, different label
+    # formatting — fold separators to spaces so they compare equal.
+    s = c.strip().strip("\"'`").casefold()
+    s = re.sub(r"[_\-]+", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
 
 
 def _columns_match(a: str, b: str, equiv: list[list[str]]) -> bool:
