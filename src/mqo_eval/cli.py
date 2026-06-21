@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -52,6 +53,10 @@ def _cmd_run(args: argparse.Namespace) -> int:
         # Selective-retest policy (PRD-mqoeval-selective-retest)
         "skip_stable": args.skip_stable,  # None = off (default)
         "full_every": args.full_every,
+        # MQO trace capture (PRD-mqoeval-mqo-trace-capture): --trace, or MQO_TRACE=1.
+        # Failing cases always carry a trace regardless of this flag.
+        "trace": bool(args.trace)
+        or os.environ.get("MQO_TRACE", "").lower() in ("1", "true", "yes"),
     }
 
     if corpus.active:
@@ -156,6 +161,78 @@ def _cmd_summary(args: argparse.Namespace) -> int:
                 print(line)
         else:
             print("unstable:    none (all reps unanimous)")
+    return 0
+
+
+def _cmd_trace(args: argparse.Namespace) -> int:
+    """Print one case's captured MQO + bound SQL + candidate vs gold rows (AC4).
+
+    Turns a failed case into a one-glance "model-fault vs MQO-fault" verdict: if the
+    sent MQO is wrong → grounding/prompt problem; if the MQO is right but the rows are
+    wrong → an mqo-mcp compiler/router/binder problem.
+    """
+    import textwrap
+
+    path = Path(args.record)
+    if not path.exists():
+        print(f"error: record file not found: {path}", file=sys.stderr)
+        return 1
+    data = json.loads(path.read_text())
+    cases = data.get("cases", [])
+    case = next((c for c in cases if c.get("id") == args.case_id), None)
+    if case is None:
+        ids = ", ".join(c.get("id", "?") for c in cases) or "(none)"
+        print(
+            f"error: case '{args.case_id}' not found in record.\navailable: {ids}",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"case:    {case.get('id')}")
+    print(f"verdict: {case.get('verdict')}")
+    if case.get("nl_query"):
+        print(f"query:   {case['nl_query']}")
+    if case.get("detail"):
+        print(f"detail:  {case['detail']}")
+
+    trace = case.get("trace")
+    if not trace:
+        print(
+            "\n(no trace captured — rerun with --trace, or the agent called no "
+            "mcp__mqo__* tools / is not trace-aware)"
+        )
+    else:
+        print(f"\n── trace ({len(trace)} mqo tool call(s)) ──")
+        for e in trace:
+            flag = "  [ERROR]" if e.get("is_error") else ""
+            print(f"\n[{e.get('seq', '?')}] {e.get('tool', '?')}{flag}")
+            if "mqo" in e:
+                print("  MQO sent:")
+                print(textwrap.indent(json.dumps(e["mqo"], indent=2), "    "))
+            elif "args" in e:
+                print("  args:")
+                print(textwrap.indent(json.dumps(e["args"], indent=2), "    "))
+            if "bound_sql" in e:
+                bs = e["bound_sql"]
+                print(f"  bound SQL: {bs if bs else 'null (server does not echo SQL yet)'}")
+            if e.get("is_error"):
+                print(f"  error: {e.get('error', '')}")
+            elif e.get("result_rows") is not None:
+                print(f"  result rows ({len(e['result_rows'])} shown):")
+                for r in e["result_rows"]:
+                    print(f"    {r}")
+
+    print("\n── candidate (model answer) ──")
+    print(f"  columns: {case.get('candidate_columns')}")
+    print(f"  rows ({case.get('row_count_candidate')}):")
+    for r in case.get("candidate_rows_sample") or []:
+        print(f"    {r}")
+
+    print("\n── gold (oracle) ──")
+    print(f"  columns: {case.get('reference_columns')}")
+    print(f"  rows ({case.get('row_count_reference')}):")
+    for r in case.get("reference_rows_sample") or []:
+        print(f"    {r}")
     return 0
 
 
@@ -270,9 +347,26 @@ def _build_parser() -> argparse.ArgumentParser:
             "Only used when --skip-stable is set."
         ),
     )
+    run_p.add_argument(
+        "--trace",
+        action="store_true",
+        help=(
+            "Capture the MQO each case's agent sent (+ bound SQL + returned rows) into "
+            "the record's per-case `trace`. On for ALL cases when set; failing cases "
+            "always carry a trace regardless. Also enabled by MQO_TRACE=1. "
+            "Inspect with `mqo-eval trace <record> <case-id>`."
+        ),
+    )
 
     sum_p = sub.add_parser("summary", help="summarise a run record")
     sum_p.add_argument("--results", required=True, help="path to RunRecord JSON")
+
+    trace_p = sub.add_parser(
+        "trace",
+        help="print a case's captured MQO + bound SQL + candidate/gold rows",
+    )
+    trace_p.add_argument("record", help="path to a RunRecord JSON")
+    trace_p.add_argument("case_id", help="the case id to inspect")
 
     return p
 
@@ -284,3 +378,5 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit(_cmd_run(args))
     elif args.command == "summary":
         sys.exit(_cmd_summary(args))
+    elif args.command == "trace":
+        sys.exit(_cmd_trace(args))

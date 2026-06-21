@@ -52,6 +52,11 @@ class CaseRecord:
     gold_deduped: Optional[bool] = None
     gold_rows_pre: Optional[int] = None
     gold_rows_post: Optional[int] = None
+    # MQO trace (PRD-mqoeval-mqo-trace-capture): the mcp__mqo__* tool calls the model
+    # made — the sent MQO + bound SQL + returned rows. Persisted when --trace is on
+    # for any case, and always for failing cases. None → key stripped from JSON
+    # (record stays byte-compatible with pre-trace consumers; AC3).
+    trace: Optional[list] = None
 
 
 @dataclass
@@ -126,6 +131,11 @@ class RunRecord:
         # flatten summary
         d["summary"] = asdict(self.summary)
         d["summary"]["accuracy"] = self.summary.accuracy
+        # Drop the optional trace key when absent so records stay byte-compatible
+        # with pre-trace consumers (AC3): only cases that captured a trace carry it.
+        for case in d["cases"]:
+            if case.get("trace") is None:
+                case.pop("trace", None)
         return d
 
 

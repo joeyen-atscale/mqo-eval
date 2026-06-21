@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,8 +29,19 @@ from .registry import AgentEntry
 from .scoring import score_case
 
 
-def _invoke_agent(entry: AgentEntry, query: Query, context: str, model: str) -> str:
-    """Invoke the agent subprocess and return its stdout."""
+def _invoke_agent(
+    entry: AgentEntry,
+    query: Query,
+    context: str,
+    model: str,
+    trace_out: str | None = None,
+) -> str:
+    """Invoke the agent subprocess and return its stdout.
+
+    When ``trace_out`` is set, ``$MQO_TRACE_OUT`` is exported so a trace-aware agent
+    (claude-oauth) writes its captured mcp__mqo__* tool calls there for the runner
+    to read back. Trace-unaware agents simply ignore it.
+    """
     env_input = {
         "question": query.nl_query,
         "expected_sql": query.expected_sql,
@@ -38,6 +51,8 @@ def _invoke_agent(entry: AgentEntry, query: Query, context: str, model: str) -> 
     }
     env = os.environ.copy()
     env["MQO_EVAL_CASE"] = json.dumps(env_input)
+    if trace_out:
+        env["MQO_TRACE_OUT"] = trace_out
 
     result = subprocess.run(
         entry.command,
@@ -48,6 +63,21 @@ def _invoke_agent(entry: AgentEntry, query: Query, context: str, model: str) -> 
         timeout=660,
     )
     return result.stdout
+
+
+def _read_trace_file(path: str) -> list | None:
+    """Read a trace JSON the agent wrote to ``path``; None if absent/empty/invalid."""
+    try:
+        txt = Path(path).read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if not txt:
+        return None
+    try:
+        data = json.loads(txt)
+    except (json.JSONDecodeError, ValueError):
+        return None
+    return data if isinstance(data, list) and data else None
 
 
 def _fixture_verdict(answer: AgentAnswer) -> str:
@@ -74,6 +104,9 @@ class _RepResult:
     gold_deduped: bool = False
     gold_rows_pre: int | None = None
     gold_rows_post: int | None = None
+    # MQO trace (PRD-mqoeval-mqo-trace-capture): the mcp__mqo__* tool calls captured
+    # this rep, or None if the agent emitted no trace.
+    trace: list | None = None
 
 
 def _score_one_rep(
@@ -87,70 +120,93 @@ def _score_one_rep(
 ) -> _RepResult:
     """Invoke agent once and score, returning diagnostic fields."""
 
+    # Side-channel file for the agent's MQO trace (stdout must stay a single answer
+    # envelope, so the trace can't ride on it). Trace-unaware agents leave it empty.
+    trace_fd, trace_path = tempfile.mkstemp(suffix=".trace.json", prefix="mqo_trace_")
+    os.close(trace_fd)
+    trace: list | None = None
     try:
-        raw = _invoke_agent(entry, query, context, model)
-        answer: AgentAnswer = parse_answer(raw)
-    except ParseError as exc:
-        return _RepResult("parse_error", None, str(exc), None, None, None, None, None)
-    except subprocess.TimeoutExpired:
-        return _RepResult("parse_error", None, "agent timed out", None, None, None, None, None)
+        try:
+            raw = _invoke_agent(entry, query, context, model, trace_out=trace_path)
+        except subprocess.TimeoutExpired:
+            trace = _read_trace_file(trace_path)
+            return _RepResult(
+                "parse_error", None, "agent timed out",
+                None, None, None, None, None, trace=trace,
+            )
 
-    if oracle_mode == "fixture":
-        verdict = _fixture_verdict(answer)
-        return _RepResult(verdict, answer, None, None, None, None, None, None)
+        trace = _read_trace_file(trace_path)
 
-    assert cfg is not None  # precheck already ran; cfg is set
+        try:
+            answer: AgentAnswer = parse_answer(raw)
+        except ParseError as exc:
+            return _RepResult(
+                "parse_error", None, str(exc),
+                None, None, None, None, None, trace=trace,
+            )
 
-    if oracle_mode == "precomputed":
-        assert isinstance(cfg, PrecomputedConfig)
-        reference = execute_golden_precomputed(cfg._cache, query.id)
-    elif oracle_mode == "pgwire":
-        assert isinstance(cfg, PgwireConfig)
-        substituted_sql = substitute_placeholders(
-            query.expected_sql,
-            cfg.catalog_name,
-            cfg.model_name,
+        if oracle_mode == "fixture":
+            verdict = _fixture_verdict(answer)
+            return _RepResult(
+                verdict, answer, None, None, None, None, None, None, trace=trace,
+            )
+
+        assert cfg is not None  # precheck already ran; cfg is set
+
+        if oracle_mode == "precomputed":
+            assert isinstance(cfg, PrecomputedConfig)
+            reference = execute_golden_precomputed(cfg._cache, query.id)
+        elif oracle_mode == "pgwire":
+            assert isinstance(cfg, PgwireConfig)
+            substituted_sql = substitute_placeholders(
+                query.expected_sql,
+                cfg.catalog_name,
+                cfg.model_name,
+            )
+            reference = execute_golden(cfg, query.id, substituted_sql)
+        else:
+            # oracle == "cli"
+            assert isinstance(cfg, CliOracleConfig)
+            reference = execute_golden_cli(cfg, query.id, query.expected_sql)
+
+        equiv = query.equivalent_attributes or []
+        value_equiv = query.equivalent_values or {}
+        result = score_case(
+            reference, answer, pass_threshold=pass_threshold,
+            equiv=equiv, value_equiv=value_equiv,
+            gold_sql=query.expected_sql,
         )
-        reference = execute_golden(cfg, query.id, substituted_sql)
-    else:
-        # oracle == "cli"
-        assert isinstance(cfg, CliOracleConfig)
-        reference = execute_golden_cli(cfg, query.id, query.expected_sql)
 
-    equiv = query.equivalent_attributes or []
-    value_equiv = query.equivalent_values or {}
-    result = score_case(
-        reference, answer, pass_threshold=pass_threshold,
-        equiv=equiv, value_equiv=value_equiv,
-        gold_sql=query.expected_sql,
-    )
+        row_recall: float | None = None
+        jaccard: float | None = None
+        column_recall: float | None = None
+        column_jaccard: float | None = None
+        if result.metrics is not None:
+            row_recall = result.metrics.row_recall
+            jaccard = result.metrics.row_jaccard
+            column_recall = result.metrics.column_recall
+            column_jaccard = result.metrics.column_jaccard
 
-    row_recall: float | None = None
-    jaccard: float | None = None
-    column_recall: float | None = None
-    column_jaccard: float | None = None
-    if result.metrics is not None:
-        row_recall = result.metrics.row_recall
-        jaccard = result.metrics.row_jaccard
-        column_recall = result.metrics.column_recall
-        column_jaccard = result.metrics.column_jaccard
+        # Only retain reference table for sampling when it's a real ReferenceTable
+        ref_table = reference if isinstance(reference, ReferenceTable) else None
 
-    # Only retain reference table for sampling when it's a real ReferenceTable
-    ref_table = reference if isinstance(reference, ReferenceTable) else None
-
-    return _RepResult(
-        verdict=result.verdict,
-        answer=answer,
-        detail=result.detail,
-        row_recall=row_recall,
-        jaccard=jaccard,
-        column_recall=column_recall,
-        column_jaccard=column_jaccard,
-        reference=ref_table,
-        gold_deduped=result.gold_deduped,
-        gold_rows_pre=result.gold_rows_pre,
-        gold_rows_post=result.gold_rows_post,
-    )
+        return _RepResult(
+            verdict=result.verdict,
+            answer=answer,
+            detail=result.detail,
+            row_recall=row_recall,
+            jaccard=jaccard,
+            column_recall=column_recall,
+            column_jaccard=column_jaccard,
+            reference=ref_table,
+            gold_deduped=result.gold_deduped,
+            gold_rows_pre=result.gold_rows_pre,
+            gold_rows_post=result.gold_rows_post,
+            trace=trace,
+        )
+    finally:
+        with contextlib.suppress(OSError):
+            os.unlink(trace_path)
 
 
 def _build_diagnostic_fields(
@@ -265,6 +321,10 @@ def run_corpus(
     skip_stable: int | None = config.get("skip_stable")  # None = off (default)
     full_every: int = int(config.get("full_every", 5))
 
+    # MQO trace capture (PRD-mqoeval-mqo-trace-capture): when on, persist the trace
+    # for every case; failing cases (verdict != correct) always carry one (AC5).
+    trace_enabled: bool = bool(config.get("trace"))
+
     corpus_id = corpus.path.stem
     record, _ = new_record(
         agent=agent_entry.name,
@@ -373,6 +433,7 @@ def run_corpus(
         agg_gold_deduped: bool = False
         agg_gold_rows_pre: int | None = None
         agg_gold_rows_post: int | None = None
+        agg_trace: list | None = None
 
         effective_threshold = q.pass_threshold if q.pass_threshold is not None else pass_threshold
         if repeat == 1:
@@ -392,6 +453,7 @@ def run_corpus(
             agg_gold_deduped = rep.gold_deduped
             agg_gold_rows_pre = rep.gold_rows_pre
             agg_gold_rows_post = rep.gold_rows_post
+            agg_trace = rep.trace
         else:
             # k-of-n: run repeat times, aggregate
             rep_verdicts_list = []
@@ -443,6 +505,11 @@ def run_corpus(
             agg_gold_deduped = last_rep.gold_deduped if last_rep else False
             agg_gold_rows_pre = last_rep.gold_rows_pre if last_rep else None
             agg_gold_rows_post = last_rep.gold_rows_post if last_rep else None
+            agg_trace = last_rep.trace if last_rep else None
+
+        # Persist the trace when capture is on, or always for a failing case (AC5).
+        # agg_trace is already None when empty, so a no-tool case stays trace-less (AC3).
+        case_trace = agg_trace if (trace_enabled or verdict != "correct") else None
 
         latency_ms = int((time.monotonic() - t0) * 1000)
         record.cases.append(
@@ -468,6 +535,7 @@ def run_corpus(
                 gold_deduped=agg_gold_deduped if agg_gold_deduped else None,
                 gold_rows_pre=agg_gold_rows_pre,
                 gold_rows_post=agg_gold_rows_post,
+                trace=case_trace,
             )
         )
 

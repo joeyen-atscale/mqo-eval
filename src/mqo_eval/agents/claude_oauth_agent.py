@@ -124,6 +124,183 @@ def _extract_answer_from_result(result_text: str) -> AgentAnswer:
         return CannotAnswer(reason=f"could not parse answer from: {result_text[:200]!r}")
 
 
+# ---------------------------------------------------------------------------
+# Trace capture (PRD-mqoeval-mqo-trace-capture)
+#
+# With ``--output-format stream-json --verbose`` Claude emits one JSON object per
+# line: a ``system`` init, ``assistant`` messages (whose content holds ``tool_use``
+# blocks), ``user`` messages (holding ``tool_result`` blocks), and a final
+# ``result`` message. We parse that stream to record every ``mcp__mqo__*`` tool the
+# model invoked — crucially the *MQO it sent* to ``query_multidimensional`` and the
+# rows/error the server returned — so a failed case can be classified as model-fault
+# (wrong MQO) vs MQO-fault (right MQO, wrong rows) at a glance.
+# ---------------------------------------------------------------------------
+
+TRACE_RESULT_CAP = 4000  # max chars of a tool_result captured into the trace
+TRACE_ROW_CAP = 10       # max rows surfaced from a tool_result
+
+
+def _stringify_tool_result_content(content: Any) -> tuple[str, list | None]:
+    """Flatten an MCP tool_result ``content`` payload to (text, rows?).
+
+    ``content`` may be a string, a list of content blocks
+    (``[{"type": "text", "text": ...}]``), or an arbitrary object. If the text
+    parses as JSON carrying a ``rows`` list, the first ``TRACE_ROW_CAP`` rows are
+    surfaced separately for one-glance triage.
+    """
+    if isinstance(content, str):
+        text = content
+    elif isinstance(content, list):
+        parts: list[str] = []
+        for blk in content:
+            if isinstance(blk, dict) and blk.get("type") == "text":
+                parts.append(str(blk.get("text", "")))
+            elif isinstance(blk, str):
+                parts.append(blk)
+            else:
+                parts.append(json.dumps(blk, default=str))
+        text = "\n".join(parts)
+    else:
+        text = json.dumps(content, default=str)
+
+    rows: list | None = None
+    try:
+        obj = json.loads(text)
+        if isinstance(obj, dict) and isinstance(obj.get("rows"), list):
+            rows = obj["rows"][:TRACE_ROW_CAP]
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return text, rows
+
+
+def _extract_bound_sql(text: str) -> str | None:
+    """Pull a server-echoed bound SQL/DAX string out of a tool_result, if present.
+
+    The mqo-mcp server does not echo compiled SQL today (G3 records ``null`` until a
+    diagnostic flag lands), but this looks for the obvious keys so the trace lights
+    up automatically the moment the server starts exposing them.
+    """
+    try:
+        obj = json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return None
+    if not isinstance(obj, dict):
+        return None
+    for key in ("bound_sql", "compiled_sql", "sql", "bound_dax", "dax"):
+        val = obj.get(key)
+        if val:
+            return str(val)
+    return None
+
+
+def parse_trace_from_stream(lines: list[str]) -> list[dict[str, Any]]:
+    """Parse claude stream-json lines into an ordered MQO trace.
+
+    Returns one entry per ``mcp__mqo__*`` ``tool_use``, with the matching
+    ``tool_result`` attached. For ``query_multidimensional`` the sent MQO is stored
+    verbatim under the ``mqo`` key (the load-bearing field); other tools store their
+    arguments under ``args``.
+    """
+    pending: dict[str, int] = {}  # tool_use_id -> index in trace
+    trace: list[dict[str, Any]] = []
+    seq = 0
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            ev = json.loads(line)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        if not isinstance(ev, dict):
+            continue
+        msg = ev.get("message") or {}
+        content = msg.get("content")
+        etype = ev.get("type")
+
+        if etype == "assistant" and isinstance(content, list):
+            for blk in content:
+                if not isinstance(blk, dict) or blk.get("type") != "tool_use":
+                    continue
+                name = blk.get("name", "")
+                if not name.startswith("mcp__mqo__"):
+                    continue
+                tinput = blk.get("input", {})
+                entry: dict[str, Any] = {"seq": seq, "tool": name}
+                seq += 1
+                if name.endswith("query_multidimensional"):
+                    entry["mqo"] = (
+                        tinput.get("mqo", tinput)
+                        if isinstance(tinput, dict) else tinput
+                    )
+                else:
+                    entry["args"] = tinput
+                trace.append(entry)
+                tuid = blk.get("id")
+                if tuid:
+                    pending[tuid] = len(trace) - 1
+
+        elif etype == "user" and isinstance(content, list):
+            for blk in content:
+                if not isinstance(blk, dict) or blk.get("type") != "tool_result":
+                    continue
+                tuid = blk.get("tool_use_id")
+                if tuid is None or tuid not in pending:
+                    continue
+                entry = trace[pending[tuid]]
+                text, rows = _stringify_tool_result_content(blk.get("content"))
+                is_error = bool(blk.get("is_error"))
+                entry["is_error"] = is_error
+                if is_error:
+                    entry["error"] = text[:TRACE_RESULT_CAP]
+                else:
+                    if rows is not None:
+                        entry["result_rows"] = rows
+                    entry["result"] = text[:TRACE_RESULT_CAP]
+                bound = _extract_bound_sql(text)
+                entry["bound_sql"] = bound  # explicit null when unavailable (G3)
+
+    return trace
+
+
+def _extract_result_text_from_stream(lines: list[str]) -> tuple[str | None, bool]:
+    """Find the final answer text + error flag in a claude stream.
+
+    Handles both ``stream-json`` (a ``type == "result"`` event) and the legacy
+    single ``--output-format json`` envelope (a bare object with a ``result`` key),
+    so the answer path is robust regardless of output format.
+    """
+    result_text: str | None = None
+    is_error = False
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            ev = json.loads(line)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        if not isinstance(ev, dict):
+            continue
+        if ev.get("type") == "result":
+            result_text = ev.get("result", "")
+            is_error = bool(ev.get("is_error"))
+        elif "type" not in ev and "result" in ev:
+            # Legacy single-envelope (--output-format json)
+            result_text = ev.get("result", "")
+            is_error = bool(ev.get("is_error"))
+    return result_text, is_error
+
+
+def _write_trace(trace: list[dict[str, Any]]) -> None:
+    """Write the captured trace to ``$MQO_TRACE_OUT`` if the runner asked for it."""
+    out = os.environ.get("MQO_TRACE_OUT")
+    if not out:
+        return
+    with contextlib.suppress(OSError):
+        Path(out).write_text(json.dumps(trace), encoding="utf-8")
+
+
 class ClaudeOAuthAgent:
     """Drives mqo-mcp tools via headless Claude using the OAuth subscription."""
 
@@ -162,9 +339,12 @@ class ClaudeOAuthAgent:
         env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
         env["MCP_TIMEOUT"] = str(self.cfg.mcp_timeout_ms)
 
+        # stream-json + verbose so the per-tool MQO/result events are visible to the
+        # trace parser; the final answer rides the closing ``result`` event.
         cmd = [
             "claude", "-p", prompt,
-            "--output-format", "json",
+            "--output-format", "stream-json",
+            "--verbose",
             "--mcp-config", cfg_path,
             "--strict-mcp-config",
             "--allowedTools", "mcp__mqo__*",
@@ -184,21 +364,23 @@ class ClaudeOAuthAgent:
                 timeout=self.cfg.timeout_s,
             )
         except subprocess.TimeoutExpired:
+            _write_trace([])  # no stream to capture
             return CannotAnswer(reason=f"claude timed out after {self.cfg.timeout_s}s")
+
+        lines = (result.stdout or "").splitlines()
+        # Capture the trace before any early-return so even a non-zero exit (a failed
+        # case — exactly when we most want the trace) records what the model did.
+        _write_trace(parse_trace_from_stream(lines))
 
         if result.returncode != 0:
             stderr_snippet = result.stderr[:200] if result.stderr else ""
             return CannotAnswer(reason=f"claude exited {result.returncode}: {stderr_snippet}")
 
-        try:
-            envelope = json.loads(result.stdout)
-        except json.JSONDecodeError:
+        result_text, is_error = _extract_result_text_from_stream(lines)
+        if result_text is None:
             return CannotAnswer(reason=f"claude stdout is not JSON: {result.stdout[:200]!r}")
-
-        if envelope.get("is_error"):
-            return CannotAnswer(reason=f"claude error: {envelope.get('result','')[:200]}")
-
-        result_text = envelope.get("result", "")
+        if is_error:
+            return CannotAnswer(reason=f"claude error: {result_text[:200]}")
         if not result_text:
             return CannotAnswer(reason="claude returned empty result")
 
