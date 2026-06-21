@@ -1,0 +1,134 @@
+# Rule-violation corpus: labeled query cases for per-rule violation measurement
+# Schema version: 1.0
+#
+# Each case:
+#   id:          unique string, stable across corpus versions
+#   rule_ids:    list of rule IDs exercised by this case
+#   verdict:     "violating" | "conforming" | "edge"
+#   sql:         the SQL string under test
+#   description: one-line human note
+#   lm_driven:   true if an LLM judgment is needed (excluded from hard CI floor)
+
+cases:
+
+  # ── R-MS: no-multi-statement ───────────────────────────────────────────────
+
+  - id: rms-v-001
+    rule_ids: [R-MS]
+    verdict: violating
+    sql: "SELECT * FROM tpcds.public.customer; SELECT * FROM tpcds.public.store"
+    description: "Two SELECT statements joined by a semicolon -- clear multi-statement violation."
+    lm_driven: false
+
+  - id: rms-v-002
+    rule_ids: [R-MS]
+    verdict: violating
+    sql: |
+      SELECT c_customer_sk, c_first_name
+      FROM tpcds.public.customer
+      WHERE c_birth_year > 1980;
+      SELECT COUNT(*) FROM tpcds.public.store_sales
+    description: "Multi-line multi-statement -- realistic agent output with newline between statements."
+    lm_driven: false
+
+  - id: rms-c-001
+    rule_ids: [R-MS]
+    verdict: conforming
+    sql: "SELECT c_customer_sk, c_first_name FROM tpcds.public.customer WHERE c_birth_year > 1980"
+    description: "Single SELECT with WHERE clause -- no semicolons, clearly conforming."
+    lm_driven: false
+
+  - id: rms-c-002
+    rule_ids: [R-MS]
+    verdict: conforming
+    sql: |
+      SELECT
+        ss_store_sk,
+        SUM(ss_net_paid) AS total_paid
+      FROM tpcds.public.store_sales
+      WHERE ss_sold_date_sk IS NOT NULL
+      GROUP BY ss_store_sk
+      ORDER BY total_paid DESC
+    description: "Multi-line single SELECT with aggregation -- no multi-statement violation."
+    lm_driven: false
+
+  - id: rms-e-001
+    rule_ids: [R-MS]
+    verdict: edge
+    sql: "SELECT c_email_address FROM tpcds.public.customer WHERE c_email_address LIKE '%;%'"
+    description: >
+      Semicolon inside a string literal -- must NOT be flagged as multi-statement.
+      Tests that the checker is not naive about string contexts.
+    lm_driven: false
+
+  - id: rms-v-003
+    rule_ids: [R-MS]
+    verdict: violating
+    sql: "SELECT 1; SELECT 2; SELECT 3"
+    description: "Three trivial statements -- tests that the checker catches more than 2 statements."
+    lm_driven: false
+
+  - id: rms-c-003
+    rule_ids: [R-MS]
+    verdict: conforming
+    sql: "SELECT c_customer_sk FROM tpcds.public.customer LIMIT 10"
+    description: "Simple SELECT with LIMIT -- no semicolons present."
+    lm_driven: false
+
+  # ── R-FQ: fully-qualified-from ─────────────────────────────────────────────
+
+  - id: rfq-v-001
+    rule_ids: [R-FQ]
+    verdict: violating
+    sql: "SELECT * FROM customer WHERE c_birth_year > 1980"
+    description: "Bare table name (no catalog.schema prefix) in FROM clause."
+    lm_driven: false
+
+  - id: rfq-v-002
+    rule_ids: [R-FQ]
+    verdict: violating
+    sql: "SELECT ss_net_paid FROM public.store_sales"
+    description: "Two-part name (schema.table) -- missing catalog qualifier."
+    lm_driven: false
+
+  - id: rfq-c-001
+    rule_ids: [R-FQ]
+    verdict: conforming
+    sql: "SELECT c_customer_sk FROM tpcds.public.customer"
+    description: "Fully-qualified three-part name -- conforming."
+    lm_driven: false
+
+  - id: rfq-c-002
+    rule_ids: [R-FQ]
+    verdict: conforming
+    sql: |
+      SELECT ss_store_sk, SUM(ss_net_paid) AS total_paid
+      FROM tpcds.public.store_sales
+      GROUP BY ss_store_sk
+    description: "Fully-qualified multi-line query with aggregation -- conforming."
+    lm_driven: false
+
+  # ── R-AG: attribute-aggregation-guard ──────────────────────────────────────
+
+  - id: rag-v-001
+    rule_ids: [R-AG]
+    verdict: violating
+    sql: "SELECT SUM(c_birth_year) FROM tpcds.public.customer"
+    description: "SUM applied to a dimension attribute (birth year) -- violation."
+    lm_driven: true
+
+  - id: rag-c-001
+    rule_ids: [R-AG]
+    verdict: conforming
+    sql: "SELECT SUM(ss_net_paid) FROM tpcds.public.store_sales"
+    description: "SUM on a certified numeric measure -- conforming."
+    lm_driven: true
+
+  # ── Multi-rule: combined violations ────────────────────────────────────────
+
+  - id: multi-v-001
+    rule_ids: [R-MS, R-FQ]
+    verdict: violating
+    sql: "SELECT * FROM customer; SELECT * FROM store"
+    description: "Violates both R-MS (multi-statement) and R-FQ (bare table names)."
+    lm_driven: false

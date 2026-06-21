@@ -1,0 +1,156 @@
+# Rule catalog for the AtScale query-semantic-layer skill (R1-R10)
+# Source: query-semantic-layer/SKILL.md + ENFORCEMENT.md
+# Schema version: 1.0
+#
+# decidability:
+#   sql-only      - predicate can be decided by parsing the SQL string alone
+#   sql+metadata  - predicate requires model-metadata (column catalog, date roles, etc.)
+#   intent        - predicate requires knowledge of the user's goal or prior dialog
+#
+# tier:
+#   server-validator  - can be enforced as a hard reject in the server query-validation layer
+#   advisory          - best-effort guidance; enforcement requires intent or is too costly
+#   hybrid            - part server-validator (decidable sub-pred), part advisory (intent sub-pred)
+
+rules:
+  - rule_id: R-MS
+    name: no-multi-statement
+    description: >
+      The agent MUST NOT submit multiple SQL statements separated by a semicolon
+      in a single query_execution call. Each tool call must contain exactly one
+      SELECT statement.
+    decidability: sql-only
+    tier: server-validator
+    false_positive_cost: L
+    false_negative_cost: H
+    jira_ref: ATSCALE-48466
+    rationale: >
+      A semicolon between two non-literal tokens unambiguously signals a second
+      statement. Deterministic parse — no metadata or intent needed.
+
+  - rule_id: R-FQ
+    name: fully-qualified-from
+    description: >
+      All table references in the FROM clause MUST use the fully-qualified
+      three-part name (catalog.schema.table). Bare table names are rejected.
+    decidability: sql-only
+    tier: server-validator
+    false_positive_cost: L
+    false_negative_cost: H
+    jira_ref: ATSCALE-48423
+    rationale: >
+      Fully-qualified names are syntactically checkable; the reference validator
+      shipped in PR #79 already enforces this at the server level.
+
+  - rule_id: R-CM
+    name: certified-measure-only
+    description: >
+      The agent MUST only reference measures that are present in the model's
+      certified column list. Inventing or guessing measure names is prohibited.
+    decidability: sql+metadata
+    tier: server-validator
+    false_positive_cost: M
+    false_negative_cost: H
+    jira_ref: ATSCALE-48820
+    rationale: >
+      Certified column list is available at validation time; a path-existence
+      check against the catalog suffices.
+
+  - rule_id: R-SD
+    name: scoped-discovery
+    description: >
+      Discovery queries (SELECT DISTINCT, COUNT DISTINCT, member enumeration)
+      MUST be scoped to the minimal grain needed. Full-table scans for member
+      enumeration are prohibited.
+    decidability: hybrid
+    tier: hybrid
+    false_positive_cost: H
+    false_negative_cost: M
+    rationale: >
+      The "minimal grain" sub-predicate requires intent; however, FULL TABLE
+      SCAN without a WHERE clause on a known large dimension is detectable
+      as a sql+metadata heuristic.
+
+  - rule_id: R-DR
+    name: date-role-filter
+    description: >
+      Date filters MUST use the model's declared date-role columns (e.g.
+      order_date, ship_date). Filtering on raw warehouse date columns bypasses
+      time-intelligence and produces wrong results.
+    decidability: sql+metadata
+    tier: advisory
+    false_positive_cost: H
+    false_negative_cost: H
+    rationale: >
+      Distinguishing a date-role column from a raw warehouse date requires
+      model metadata (date-role registry). Advisory until the registry is
+      exposed at validation time.
+
+  - rule_id: R-AG
+    name: attribute-aggregation-guard
+    description: >
+      Dimension attributes MUST NOT appear as the sole argument to SUM/AVG or
+      other numeric aggregates. Only certified numeric measures may be aggregated.
+    decidability: sql+metadata
+    tier: server-validator
+    false_positive_cost: M
+    false_negative_cost: H
+    rationale: >
+      Whether a column is a dimension attribute or a certified measure is
+      derivable from the model catalog — decidable without intent.
+
+  - rule_id: R-OB
+    name: orderby-dimension-key
+    description: >
+      ORDER BY clauses MUST reference a projected column or its key, not an
+      expression that is not in the SELECT list. Sorting by unexposed columns
+      produces undefined behavior across backends.
+    decidability: sql-only
+    tier: advisory
+    false_positive_cost: M
+    false_negative_cost: M
+    rationale: >
+      Detectable from the SELECT list vs ORDER BY diff, but the cost of
+      false-positives (valid ORDER BY alias usages) is non-trivial.
+
+  - rule_id: R-NL
+    name: no-literal-injection
+    description: >
+      The agent MUST NOT inject literal strings or numeric values into the SQL
+      that are not from the user's original request. Fabricated filter values
+      produce hallucinated answers.
+    decidability: intent
+    tier: advisory
+    false_positive_cost: H
+    false_negative_cost: H
+    rationale: >
+      Deciding whether a literal was derived from user intent requires access
+      to the prior dialog — intent classification, not SQL inspection.
+
+  - rule_id: R-SJ
+    name: semijoin-projection-grounding
+    description: >
+      When building a semi-join (IN / EXISTS sub-select), the outer query's
+      projected attributes MUST be grounded in the model. Projecting columns
+      that exist only in the sub-select produces resolution errors.
+    decidability: sql+metadata
+    tier: advisory
+    false_positive_cost: M
+    false_negative_cost: H
+    rationale: >
+      Grounding check requires catalog lookup; currently advisory pending
+      server-side sub-select validation support.
+
+  - rule_id: R-PH
+    name: projection-handle-over-cap
+    description: >
+      When a query result set exceeds the configured row cap, the agent MUST
+      return a dataset handle rather than inlining raw rows into the LLM context.
+      Inlining oversized result sets degrades quality and blows context budget.
+    decidability: intent
+    tier: advisory
+    false_positive_cost: M
+    false_negative_cost: M
+    rationale: >
+      Row cap is configurable; whether a result is "too large" depends on the
+      configured threshold and the execution context, not the SQL text alone.
