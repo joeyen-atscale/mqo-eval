@@ -61,6 +61,17 @@ def _cell_key(v: Any) -> tuple[str, Any]:
             return ("n", float(f"{float(v):.6g}"))
         except (ValueError, TypeError):
             pass
+    # Handle comma-formatted numeric strings (e.g. "621,234" from LLM formatting).
+    # Only treat as numeric when the string matches a strict numeric pattern
+    # (optional sign, digits/commas, optional decimal) to avoid false-positives.
+    if isinstance(v, str):
+        stripped = v.strip()
+        cleaned = stripped.replace(",", "")
+        if cleaned and cleaned.lstrip("+-").replace(".", "", 1).isdigit():
+            try:
+                return ("n", float(f"{float(cleaned):.6g}"))
+            except (ValueError, TypeError):
+                pass
     return ("s", str(v).strip().casefold())
 
 

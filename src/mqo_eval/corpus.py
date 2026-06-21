@@ -20,6 +20,10 @@ class Query:
     # Applied during cell comparison so a correct value expressed differently
     # (e.g. a date format difference) is not a row miss.  Default empty → no effect.
     equivalent_values: dict[str, list[str]] = field(default_factory=dict)
+    # Per-case pass threshold override. When set, overrides the global --pass-threshold
+    # for this case only. Useful for cases where the reference gold has known structural
+    # differences vs. CE output (e.g. null-row suppression by the SQL backend).
+    pass_threshold: float | None = None
 
 
 @dataclass
@@ -62,6 +66,7 @@ def load_corpus(path: Path | str) -> Corpus:
             for k, v in raw_ev.items():
                 if isinstance(v, list):
                     eq_values[str(k)] = [str(x) for x in v]
+        raw_pt = item.get("pass_threshold")
         queries.append(
             Query(
                 id=str(item["id"]),
@@ -70,6 +75,7 @@ def load_corpus(path: Path | str) -> Corpus:
                 disabled=bool(item.get("disabled", False)),
                 equivalent_attributes=list(item.get("equivalent_attributes") or []),
                 equivalent_values=eq_values,
+                pass_threshold=float(raw_pt) if raw_pt is not None else None,
             )
         )
 

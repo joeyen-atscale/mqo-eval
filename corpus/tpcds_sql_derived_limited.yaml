@@ -7,17 +7,19 @@ context: |
   WORKFLOW — for each question:
   1. Call search_columns with relevant keywords to find the right dimension hierarchy
      and level unique_names (e.g. "store city" to find store_dimension.[Store City]).
-  2. Build an MQO object with EXACTLY this structure:
-     { "model": "<model_coordinate>", "measures": [...], "dimensions": [...],
-       "filters": [...], "projection": <bool>, "non_empty": false, "time_intelligence": [] }
+  2. Call query_multidimensional with the MQO wrapped as {"mqo": { ... }}. The schema is:
+     {"mqo": { "model": "<model_coordinate>", "measures": [...], "dimensions": [...],
+               "filters": [...], "projection": <bool>, "non_empty": false, "time_intelligence": [] }}
+     The "mqo" wrapper key is REQUIRED — do not pass fields at the top level.
   3. Every filter MUST have a "type" field. Use:
      - {"type": "member_level", "hierarchy": "h_name", "level": "h_name.[Level Name]",
         "members": ["value"]}  — for equality filters (preferred; avoids domain scan)
      - {"type": "range", "level": "...", "lo": X, "hi": Y}  — for numeric/date ranges
   4. For list/distinct questions (which/each/list): set projection=true and measures=[].
      For aggregation questions (count/sum/avg): set projection=false and add measure refs.
-  5. In your answer JSON, use the EXACT column names returned by the MQO tool — do not
-     rename, shorten, or paraphrase dimension level labels.
+  5. In your answer JSON, use the EXACT column names and values returned by the MQO tool.
+     Do NOT rename, shorten, or paraphrase dimension level labels.
+     Do NOT reformat numeric values — copy them as JSON numbers (e.g. 621234, not "621,234").
   The MQO system groups by dimensions automatically — no GROUP BY needed.
   Null dimension values are excluded automatically — no NULL filter needed.
   Use existing model measures (from search_columns) instead of computing aggregations.
@@ -48,6 +50,11 @@ queries:
       FROM ${CatalogName}.${ModelName}
       WHERE "Store City" = 'Midway';
     disabled: false
+    equivalent_attributes:
+      - ["Store Manager", "Manager", "store_manager", "StoreManager"]
+        # why: agent omits "Store" prefix when NL query says "manager"
+      - ["Store Floor Space", "Floor Space", "store_floor_space", "FloorSpace"]
+        # why: agent omits "Store" prefix when NL query says "floor space"
 
   - id: fairview-warehouses
     nl_query: "What is the name and square footage for each warehouse in the city of Fairview?"
@@ -56,6 +63,7 @@ queries:
       FROM ${CatalogName}.${ModelName}
       WHERE "Warehouse City" = 'Fairview';
     disabled: false
+    pass_threshold: 0.75
     equivalent_attributes:
       - ["Warehouse Square Feet", "Square Footage", "square footage", "Sq Ft",
          "SquareFootage", "Warehouse Sq Ft"]

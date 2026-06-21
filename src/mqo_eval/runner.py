@@ -374,10 +374,11 @@ def run_corpus(
         agg_gold_rows_pre: int | None = None
         agg_gold_rows_post: int | None = None
 
+        effective_threshold = q.pass_threshold if q.pass_threshold is not None else pass_threshold
         if repeat == 1:
             rep = _score_one_rep(
                 agent_entry, q, corpus.context, model,
-                oracle_mode, pgwire_cfg, pass_threshold,
+                oracle_mode, pgwire_cfg, effective_threshold,
             )
             verdict = rep.verdict
             answer = rep.answer
@@ -404,7 +405,7 @@ def run_corpus(
             for _rep in range(repeat):
                 rep = _score_one_rep(
                     agent_entry, q, corpus.context, model,
-                    oracle_mode, pgwire_cfg, pass_threshold,
+                    oracle_mode, pgwire_cfg, effective_threshold,
                 )
                 rep_verdicts_list.append(rep.verdict)
                 last_rep = rep
