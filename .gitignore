@@ -11,3 +11,11 @@ target/
 results/
 *.jsonl
 .env
+
+# buildloop runtime state + logs + credential env files (never commit)
+buildloop/state.json
+buildloop/.eval.lock
+buildloop/*.log
+buildloop/results/
+buildloop/mcp-aws-live.env
+buildloop/*-live.env

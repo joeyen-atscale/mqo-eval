@@ -11,6 +11,10 @@ LEDGER="$SCRIPT_DIR/ledger.md"
 RESULTS_DIR="$SCRIPT_DIR/results"
 STOP="$SCRIPT_DIR/STOP"
 
+# Operational layer: phase state stamping + quota gate threshold.
+source "$SCRIPT_DIR/bl-lib.sh"
+NO_IMPROVE_LIMIT="${BL_NO_IMPROVE_LIMIT:-3}"  # pause chain after N evals with no new best
+
 exec 9>"$LOCK"
 if ! flock -n 9; then
   echo "$(date -u +%Y%m%dT%H%M%SZ) eval already running, exiting"
@@ -37,8 +41,10 @@ if [[ -f "$SCRIPT_DIR/docker-local.env" ]]; then
   set -a; source "$SCRIPT_DIR/docker-local.env"; set +a
 fi
 
-# Tell the claude-oauth agent where the catalog snapshot lives
-export MQO_CATALOG_PATH="$HOME/projects/mqo-mcp/mqo-mcp-server/fixtures/tpcds_catalog.json"
+# Tell the claude-oauth agent where the catalog snapshot lives.
+# docker-local.env may override MQO_CATALOG_PATH to a CE-specific fixture;
+# fall back to the Snowflake fixture only when not already set.
+export MQO_CATALOG_PATH="${MQO_CATALOG_PATH:-$HOME/projects/mqo-mcp/mqo-mcp-server/fixtures/tpcds_catalog.json}"
 
 # Catalog / model name for oracle SQL template substitution.
 # Sourced from docker-local.env (DOCKER_CATALOG_NAME / DOCKER_MODEL_NAME).
@@ -51,8 +57,29 @@ PG_USER="${ATSCALE_PG_USER:-atscale}"
 # Haiku for eval cases (cheaper + faster; Sonnet only if MQO_CLAUDE_MODEL overrides)
 export MQO_CLAUDE_MODEL="${MQO_CLAUDE_MODEL:-claude-haiku-4-5-20251001}"
 
+# ── PREFLIGHT GATE ───────────────────────────────────────────────────────────
+# Verify CE + PGWire + the installed binary are healthy BEFORE burning OAuth quota
+# on a 20-question run. A broken-infra eval scores ~10% and teaches nothing.
+bl_phase "PREFLIGHT" "health gate"
+if ! bash "$SCRIPT_DIR/preflight.sh"; then
+  PF_REASON="$(bl_get last_preflight_reason)"
+  FAIL_TS="$(date -u +%Y%m%dT%H%M%SZ)"
+  echo "$FAIL_TS PREFLIGHT FAILED: $PF_REASON — aborting eval, NOT re-triggering chain"
+  bl_phase "IDLE" "preflight failed: $PF_REASON"
+  {
+    echo ""
+    echo "## Run — $FAIL_TS (ABORTED)"
+    echo "- Preflight FAILED: $PF_REASON"
+    echo "- Eval skipped (no quota spent). Chain NOT re-triggered."
+    echo "- Fix infra, then: rm -f $STOP && systemctl --user start mqo-buildloop.service"
+  } >> "$LEDGER"
+  # Do not re-trigger the chain — a broken-infra loop just wastes quota silently.
+  exit 1
+fi
+
 START_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 echo "$START_TS eval start"
+bl_phase "EVAL" "k=1 docker-local"
 
 cd "$EVAL_DIR"
 
@@ -91,9 +118,12 @@ END_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 
 if [[ $EVAL_EXIT -ne 0 ]]; then
   echo "$END_TS eval FAILED (exit $EVAL_EXIT)"
+  bl_phase "IDLE" "eval harness failed (exit $EVAL_EXIT)"
   rm -f "$TMPOUT"
   exit 1
 fi
+
+bl_phase "DIGEST" "scoring + hypotheses"
 
 RECORD_PATH="$(grep '^record: ' "$TMPOUT" | tail -1 | sed 's/^record: //')"
 rm -f "$TMPOUT"
@@ -152,7 +182,7 @@ print('\n'.join(lines) if lines else '(no failures — all passed or skipped)')
 PYEOF
 )"
 
-HYPOTHESES="$(timeout 90 claude -p \
+HYPOTHESES="$(timeout 90 env -u ANTHROPIC_API_KEY claude -p \
 "MQO eval — give terse root-cause hypotheses for each failure, then list top 2 next-DREAM PRD targets.
 
 Pass rate:
@@ -192,6 +222,45 @@ NEXT DREAM: <PRD-filename-stem>: <one-line rationale>" \
 
 echo "LEDGER_WRITTEN"
 echo "$END_TS ledger appended"
+
+# ── QUOTA GATE ───────────────────────────────────────────────────────────────
+# Track score vs best. Pause the chain (don't re-trigger) after NO_IMPROVE_LIMIT
+# consecutive evals that fail to set a new best — a plateau is for a human to
+# review, not for the loop to grind OAuth quota against.
+SCORE="$(echo "$SUMMARY" | grep -oE 'pass rate: [0-9]+/[0-9]+' | sed 's/pass rate: //' | head -1)"
+SCORE_PCT="$(echo "$SUMMARY" | grep -oE '\([0-9]+%\)' | tr -dc '0-9' | head -1)"
+SCORE_PCT="${SCORE_PCT:-0}"
+BEST_PCT="$(bl_get best_score_pct)"; BEST_PCT="${BEST_PCT:-0}"; [[ "$BEST_PCT" =~ ^[0-9]+$ ]] || BEST_PCT=0
+NOIMP="$(bl_get no_improvement_count)"; [[ "$NOIMP" =~ ^[0-9]+$ ]] || NOIMP=0
+ITER="$(bl_get iteration)"; [[ "$ITER" =~ ^[0-9]+$ ]] || ITER=0
+
+bl_set last_score "\"$SCORE\""
+bl_set last_score_pct "$SCORE_PCT"
+bl_set iteration "$((ITER + 1))"
+
+if (( SCORE_PCT > BEST_PCT )); then
+  bl_set best_score_pct "$SCORE_PCT"
+  bl_set no_improvement_count 0
+  echo "$END_TS quota-gate: NEW BEST ${SCORE_PCT}% (was ${BEST_PCT}%) — chain continues"
+  NOIMP=0
+else
+  NOIMP=$((NOIMP + 1))
+  bl_set no_improvement_count "$NOIMP"
+  echo "$END_TS quota-gate: no improvement (${SCORE_PCT}% ≤ best ${BEST_PCT}%) — ${NOIMP}/${NO_IMPROVE_LIMIT}"
+fi
+
+bl_phase "IDLE" "score ${SCORE} (${SCORE_PCT}%)"
+
+if (( NOIMP >= NO_IMPROVE_LIMIT )); then
+  echo "$END_TS quota-gate: PAUSING chain — ${NOIMP} evals with no new best (best ${BEST_PCT}%)"
+  bl_set chain '"paused"'
+  touch "$STOP"
+  {
+    echo "- Quota gate: PAUSED after ${NOIMP} evals with no new best (best ${BEST_PCT}%)."
+    echo "  Review, then: rm -f $STOP && bash $SCRIPT_DIR/bl-lib.sh set no_improvement_count 0 && systemctl --user start mqo-buildloop.service"
+  } >> "$LEDGER"
+  exit 0
+fi
 
 # Chain trigger — re-ignite the buildloop service so the next iteration starts immediately.
 # The STOP sentinel is checked at service start (ExecCondition), so this is always safe to fire.
