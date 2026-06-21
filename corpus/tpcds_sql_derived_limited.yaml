@@ -1,13 +1,26 @@
 context: |
-  All questions concern the TPC-DS benchmark dataset. Use the model
-  tpcds_benchmark_model exclusively to write PgSql queries.
+  All questions concern the TPC-DS benchmark dataset. Use the query_multidimensional
+  MCP tool with the model tpcds_benchmark_model to answer questions.
   The server also hosts unrelated models (e.g. AdventureWorks: ASAdventureSmall,
-  ResellerPerspective) — do not query those; their data will produce wrong
-  answers for these questions. The system groups automatically the queries by the dimensions, so
-  no group by is necessary, unless you want to group by some modified value. Also, when selecting from a dimension,
-  it will return the distinct values, so no need to use DISTINCT for them.
-  Null dimension values are not included in the model, so no need to filter them out.
-  Try to use already existing measures instead of write your own aggregations, if possible.
+  ResellerPerspective) — do not query those; their data will produce wrong answers.
+
+  WORKFLOW — for each question:
+  1. Call search_columns with relevant keywords to find the right dimension hierarchy
+     and level unique_names (e.g. "store city" to find store_dimension.[Store City]).
+  2. Build an MQO object with EXACTLY this structure:
+     { "model": "<model_coordinate>", "measures": [...], "dimensions": [...],
+       "filters": [...], "projection": <bool>, "non_empty": false, "time_intelligence": [] }
+  3. Every filter MUST have a "type" field. Use:
+     - {"type": "member_level", "hierarchy": "h_name", "level": "h_name.[Level Name]",
+        "members": ["value"]}  — for equality filters (preferred; avoids domain scan)
+     - {"type": "range", "level": "...", "lo": X, "hi": Y}  — for numeric/date ranges
+  4. For list/distinct questions (which/each/list): set projection=true and measures=[].
+     For aggregation questions (count/sum/avg): set projection=false and add measure refs.
+  5. In your answer JSON, use the EXACT column names returned by the MQO tool — do not
+     rename, shorten, or paraphrase dimension level labels.
+  The MQO system groups by dimensions automatically — no GROUP BY needed.
+  Null dimension values are excluded automatically — no NULL filter needed.
+  Use existing model measures (from search_columns) instead of computing aggregations.
 
 # Full mirror of tpcds_sql_derived.yaml (same case ids), with an explicit limit
 # added only to the large-result cases — a "top N" in the question and a matching
