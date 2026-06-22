@@ -133,7 +133,14 @@ queries:
       SELECT "Item Product Name"
       FROM ${CatalogName}.${ModelName}
       WHERE "Product Current Price" > 70;
-    disabled: true
+    # Re-enabled 2026-06-21 as the regression target for the measureless
+    # attribute-projection-with-value-filter gap (B1 cardinality_unknown / measureless
+    # path). Gold minted via mqo-pg-query against CE (639 products). Expected to FAIL
+    # until that fix lands; flip back to disabled:true to drop it from the denominator.
+    disabled: false
+    equivalent_attributes:
+      - ["Item Product Name", "Product Name", "Product", "Item Name", "Item Product"]
+        # why: agent may project any product-name label; semantic intent is unambiguous
 
   # LIMITED: one row per store -> top 20 by employee count, ties by store name.
   - id: store-employee-counts
@@ -222,6 +229,31 @@ queries:
       WHERE "Income Band" = 9
       ORDER BY "Vehicle Count" DESC, "Customer ID" ASC
       LIMIT 20;
+    # DISABLED 2026-06-21 — CE/infra limit, not live-reproducible on the eval target.
+    # The gold's OWN reference SQL (above, `= 9`) times out at >90s on local CE docker, well
+    # past the 60s engine deadline, so this case can never pass the local eval regardless of
+    # any mqo change. BUG 2 (high-cardinality cross-dim measureless DISTINCT on Customer ID's
+    # grain, no TOP-N pushdown) is the blocker; auto-anchor rejected (changes semantics + bends
+    # the measureless invariant). Separately surfaced BUG 1 (numeric member filter quoted as
+    # `IN ('9')` → fast CE "db error"; fix = type-aware quoting in the router) — but BUG 1's
+    # fix won't flip THIS case (BUG 2 still times it out), so a fast single-dim Income-Band
+    # witness is needed to measure the BUG 1 fix instead. Re-enable only if validated on
+    # mcp-aws or a faster CE. See memory: buildloop-iter2-residuals-measureless.
+    disabled: true
+
+  # WITNESS for BUG 1 (numeric member-filter SQL-quoting). Added 2026-06-21 to replace the
+  # disabled vc case as the measurable regression target. Scalar measure + single numeric
+  # filter — NO measureless/cross-dim/ChannelScope confounds, so it fails ONLY on BUG 1.
+  # Verified 2026-06-21: the router emits `WHERE "Income Band" IN ('9')` (quoted) → CE
+  # "db error" TODAY; the unquoted `IN (9)` returns 175407 (= the `= 9` oracle gold). So this
+  # case is a deterministic FAIL now and FLIPS to PASS once mqo-backend-router::filter_to_sql
+  # quotes member literals by level value_type (catalog already tags Income Band integer).
+  - id: customer-count-income-band-9
+    nl_query: "How many customers are in income band 9?"
+    expected_sql: |
+      SELECT "Customer Count"
+      FROM ${CatalogName}.${ModelName}
+      WHERE "Income Band" = 9;
     disabled: false
 
   - id: net-profit-tier-by-store-gender-2002
@@ -261,4 +293,12 @@ queries:
       WHERE "Customer State Name" = 'New Jersey'
       ORDER BY "Income Band" ASC, "Vehicle Count" ASC, "Customer Buy Potential" ASC, "Customer First Name" ASC
       LIMIT 20;
-    disabled: false
+    # DISABLED 2026-06-21 — CE/infra limit, not live-reproducible on the eval target.
+    # The gold's OWN reference SQL (above) times out at the 65s engine deadline on local CE
+    # docker — a 4-attribute cross-dim measureless projection (customer × household_demographics
+    # × customer_address), same BUG-2 class as customer-vehicle-count (high-cardinality cross-dim,
+    # no TOP-N pushdown). Text state filter, so no BUG 1. Also exhibits C (drops the null-first-name
+    # gold row) — but C's fix can't flip this case while BUG 2 times it out. The C null-member
+    # signal is preserved by product-count-per-category. Re-enable only if validated on mcp-aws
+    # or a faster CE. See memory: buildloop-iter2-residuals-measureless.
+    disabled: true

@@ -1,1752 +1,3686 @@
 {
-  "express-shipping-carriers": {
-    "columns": [
-      "Carrier"
-    ],
-    "rows": [
-      [
-        "BARIAN"
-      ],
-      [
-        "HARMSTORF"
-      ],
-      [
-        "UPS"
-      ],
-      [
-        "ZHOU"
-      ]
-    ]
-  },
-  "midway-stores": {
-    "columns": [
-      "Store Name",
-      "Store Manager",
-      "Store Floor Space"
-    ],
-    "rows": [
-      [
-        "able",
-        "Scott Smith",
-        5285950
-      ],
-      [
-        "able",
-        "Scott Smith",
-        7557959
-      ],
-      [
-        "ation",
-        "David Thomas",
-        8954883
-      ],
-      [
-        "bar",
-        "Raymond Jacobs",
-        9294113
-      ],
-      [
-        "cally",
-        "Edwin Adams",
-        9026222
-      ],
-      [
-        "eing",
-        "Brett Yates",
-        6995995
-      ],
-      [
-        "ese",
-        "Edwin Adams",
-        9341467
-      ],
-      [
-        "ought",
-        "Raymond Jacobs",
-        9294113
-      ],
-      [
-        "ought",
-        "William Ward",
-        5250760
-      ]
-    ]
-  },
-  "fairview-warehouses": {
-    "columns": [
-      "Warehouse Name",
-      "Warehouse Square Feet"
-    ],
-    "rows": [
-      [
-        "Bad cards must make.",
-        621234
-      ],
-      [
-        "Conventional childr",
-        977787
-      ],
-      [
-        "Doors canno",
-        294242
-      ],
-      [
-        "Important issues liv",
-        138504
-      ],
-      [
-        null,
-        null
-      ]
-    ]
-  },
-  "large-warehouses": {
-    "columns": [
-      "Warehouse Name"
-    ],
-    "rows": [
-      [
-        "Conventional childr"
-      ],
-      [
-        "Doors canno"
-      ],
-      [
-        "Bad cards must make."
-      ]
-    ]
-  },
-  "catalog-customer-count": {
-    "columns": [
-      "Catalog Customer Count"
-    ],
-    "rows": [
-      [
-        1434519
-      ]
-    ]
-  },
-  "total-quantity-sold-per-year": {
-    "columns": [
-      "Sold Calendar Year",
-      "Total Quantity Sold"
-    ],
-    "rows": [
-      [
-        1998,
-        48799970
-      ],
-      [
-        1999,
-        48427413
-      ],
-      [
-        2000,
-        48988922
-      ],
-      [
-        2001,
-        48788022
-      ],
-      [
-        2002,
-        48657316
-      ],
-      [
-        2003,
-        552265
-      ]
-    ]
-  },
-  "product-count-per-category": {
-    "columns": [
-      "Product category",
-      "Total Product Count"
-    ],
-    "rows": [
-      [
-        "Books",
-        1733
-      ],
-      [
-        "Children",
-        1786
-      ],
-      [
-        "Electronics",
-        1812
-      ],
-      [
-        "Home",
-        1807
-      ],
-      [
-        "Jewelry",
-        1740
-      ],
-      [
-        "Men",
-        1811
-      ],
-      [
-        "Music",
-        1860
-      ],
-      [
-        "Shoes",
-        1835
-      ],
-      [
-        "Sports",
-        1783
-      ],
-      [
-        "Women",
-        1790
-      ],
-      [
-        null,
-        43
-      ]
-    ]
-  },
-  "unique-stores-tennessee": {
-    "columns": [
-      "Store Number"
-    ],
-    "rows": [
-      [
-        1
-      ],
-      [
-        2
-      ],
-      [
-        3
-      ],
-      [
-        4
-      ],
-      [
-        5
-      ],
-      [
-        6
-      ],
-      [
-        7
-      ],
-      [
-        8
-      ],
-      [
-        9
-      ],
-      [
-        10
-      ],
-      [
-        11
-      ],
-      [
-        12
-      ]
-    ]
-  },
-  "corpcorp-brand-products": {
-    "columns": [
-      "Item Product Name"
-    ],
-    "rows": [
-      [
-        "ablen stationationought"
-      ],
-      [
-        "ableoughtpripri"
-      ],
-      [
-        "ablepriableoughtought"
-      ],
-      [
-        "barableanti"
-      ],
-      [
-        "barableationantiought"
-      ],
-      [
-        "bareingablecallyought"
-      ],
-      [
-        "callyantibarpri"
-      ],
-      [
-        "callyantieseeing"
-      ],
-      [
-        "callyationantieing"
-      ],
-      [
-        "callyn steingantiought"
-      ],
-      [
-        "callyn steingese"
-      ],
-      [
-        "callypripriableought"
-      ],
-      [
-        "eingableantioughtought"
-      ],
-      [
-        "eseablecallypri"
-      ],
-      [
-        "eseeseanticallyought"
-      ]
-    ]
-  },
-  "able-manufacturer-brands": {
-    "columns": [
-      "Product Brand Name"
-    ],
-    "rows": [
-      [
-        "amalgexporti #1"
-      ],
-      [
-        "amalgexporti #2"
-      ],
-      [
-        "amalgimporto #1"
-      ],
-      [
-        "amalgimporto #2"
-      ],
-      [
-        "amalgnameless #7"
-      ],
-      [
-        "amalgscholar #1"
-      ],
-      [
-        "brandnameless #3"
-      ],
-      [
-        "edu packamalg #2"
-      ],
-      [
-        "edu packexporti #2"
-      ],
-      [
-        "edu packimporto #2"
-      ],
-      [
-        "edu packmaxi #1"
-      ],
-      [
-        "exportiamalg #1"
-      ],
-      [
-        "exportiamalg #2"
-      ],
-      [
-        "exportiamalgamalg #6"
-      ],
-      [
-        "exportiedu pack #2"
-      ],
-      [
-        "exportiimporto #1"
-      ],
-      [
-        "exportiimporto #2"
-      ],
-      [
-        "exportiimporto #2"
-      ],
-      [
-        "exportinameless #8"
-      ],
-      [
-        "importoamalg #2"
-      ],
-      [
-        "importoexporti #2"
-      ],
-      [
-        "importoimporto #1"
-      ],
-      [
-        "importonameless #9"
-      ],
-      [
-        "importoscholar #2"
-      ],
-      [
-        "maxibrand #7"
-      ],
-      [
-        "namelessbrand #4"
-      ],
-      [
-        "scholarmaxi #12"
-      ],
-      [
-        "scholarmaxi #7"
-      ],
-      [
-        "scholarnameless #7"
-      ],
-      [
-        "univunivamalg #4"
-      ]
-    ]
-  },
-  "store-employee-counts": {
-    "columns": [
-      "Store Name",
-      "Store Number of Employees"
-    ],
-    "rows": [
-      [
-        "ation",
-        297
-      ],
-      [
-        "bar",
-        294
-      ],
-      [
-        "ought",
-        294
-      ],
-      [
-        "anti",
-        288
-      ],
-      [
-        "eing",
-        278
-      ],
-      [
-        "eing",
-        271
-      ],
-      [
-        "ought",
-        245
-      ],
-      [
-        "able",
-        236
-      ],
-      [
-        "cally",
-        229
-      ],
-      [
-        "ese",
-        218
-      ]
-    ]
-  },
-  "store-returns-per-product": {
-    "columns": [
-      "Item Product Name",
-      "Store Returns Count"
-    ],
-    "rows": [
-      [
-        null,
-        442
-      ],
-      [
-        "oughteingeinganti",
-        41
-      ],
-      [
-        "oughtbareseable",
-        40
-      ],
-      [
-        "antioughtese",
-        39
-      ],
-      [
-        "ationprieingation",
-        39
-      ],
-      [
-        "ationbarationeseought",
-        38
-      ],
-      [
-        "antibaroughtpriought",
-        37
-      ],
-      [
-        "priesebarableought",
-        37
-      ],
-      [
-        "prin stationcally",
-        37
-      ],
-      [
-        "antiationeinganti",
-        36
-      ],
-      [
-        "antibarationbarought",
-        36
-      ],
-      [
-        "antieinganticallyought",
-        36
-      ],
-      [
-        "antieseantioughtought",
-        36
-      ],
-      [
-        "antin stantipri",
-        36
-      ],
-      [
-        "ationbarn stcally",
-        36
-      ],
-      [
-        "ationeingpriought",
-        36
-      ],
-      [
-        "ationprianticallyought",
-        36
-      ],
-      [
-        "n stanticallyeseought",
-        36
-      ],
-      [
-        "n stationableese",
-        36
-      ],
-      [
-        "oughtablebarese",
-        36
-      ]
-    ]
-  },
-  "avg-sales-quantity-per-store": {
-    "columns": [
-      "Store Number",
-      "Average Store Sales Quantity"
-    ],
-    "rows": [
-      [
-        2,
-        50.5936442439659
-      ],
-      [
-        7,
-        50.55502265092984
-      ],
-      [
-        1,
-        50.550020846689414
-      ],
-      [
-        10,
-        50.47919908681093
-      ],
-      [
-        8,
-        50.47613176523048
-      ],
-      [
-        4,
-        50.43842163027273
-      ]
-    ]
-  },
-  "total-net-profit-per-product": {
-    "columns": [
-      "Item Product Name",
-      "Total Net Profit"
-    ],
-    "rows": [
-      [
-        "eingbaration",
-        8341.36
-      ],
-      [
-        "barpribarpri",
-        4787.82
-      ],
-      [
-        "barbaroughteing",
-        4720.61
-      ],
-      [
-        "barn stbarcally",
-        2905.51
-      ],
-      [
-        "callyn stcallycally",
-        2304.23
-      ],
-      [
-        "ableantiprieseought",
-        2295.77
-      ],
-      [
-        "eingableeingpri",
-        1453.22
-      ],
-      [
-        "eingn steinganti",
-        -317.89
-      ],
-      [
-        "ablebareingationought",
-        -480.15
-      ],
-      [
-        "esebarbareing",
-        -2099.76
-      ],
-      [
-        "eingablepriable",
-        -4674.84
-      ],
-      [
-        "ablen stcallyese",
-        -5024.39
-      ],
-      [
-        "callyantioughtpri",
-        -5653.65
-      ],
-      [
-        "ablen stableoughtought",
-        -6150.72
-      ],
-      [
-        "esebarantically",
-        -7536.0
-      ],
-      [
-        "eseesen stanti",
-        -8033.4
-      ],
-      [
-        "callyeseationbarought",
-        -8137.5
-      ],
-      [
-        "ableprieseantiought",
-        -8536.09
-      ],
-      [
-        "eingoughteseeseought",
-        -8805.91
-      ],
-      [
-        "eseationeingeing",
-        -10171.42
-      ]
-    ]
-  },
-  "store-quantity-sold-per-brand": {
-    "columns": [
-      "Product Brand Name",
-      "Store Quantity Sold"
-    ],
-    "rows": [
-      [
-        "importoedu pack #2",
-        1867392
-      ],
-      [
-        "edu packscholar #2",
-        1782707
-      ],
-      [
-        "importoexporti #2",
-        1755963
-      ],
-      [
-        "exportischolar #2",
-        1710205
-      ],
-      [
-        "edu packamalg #2",
-        1700536
-      ],
-      [
-        "importoamalg #2",
-        1666133
-      ],
-      [
-        "importoscholar #2",
-        1662656
-      ],
-      [
-        "amalgedu pack #2",
-        1638758
-      ],
-      [
-        "edu packexporti #2",
-        1638400
-      ],
-      [
-        "edu packedu pack #2",
-        1631065
-      ],
-      [
-        "amalgamalg #2",
-        1611899
-      ],
-      [
-        "importoimporto #2",
-        1611493
-      ],
-      [
-        "exportiedu pack #2",
-        1551659
-      ],
-      [
-        "exportiimporto #2",
-        1512891
-      ],
-      [
-        "edu packscholar #1",
-        1507327
-      ],
-      [
-        "amalgexporti #2",
-        1484644
-      ],
-      [
-        "importoimporto #1",
-        1478419
-      ],
-      [
-        "exportiexporti #2",
-        1475602
-      ],
-      [
-        "amalgimporto #2",
-        1473915
-      ],
-      [
-        "amalgscholar #2",
-        1453486
-      ]
-    ]
-  },
-  "web-sales-per-customer-state": {
-    "columns": [
-      "Customer State Name",
-      "Web Sales"
-    ],
-    "rows": [
-      [
-        "Texas",
-        9421508812.87
-      ],
-      [
-        "Georgia",
-        6036697266.41
-      ],
-      [
-        "Virginia",
-        5318563182.95
-      ],
-      [
-        "Kentucky",
-        4574601530.26
-      ],
-      [
-        "North Carolina",
-        4141003227.38
-      ],
-      [
-        "Missouri",
-        4068598209.69
-      ],
-      [
-        "Kansas",
-        4063557140.51
-      ],
-      [
-        "Illinois",
-        3923328445.75
-      ],
-      [
-        "Iowa",
-        3852920157.99
-      ],
-      [
-        null,
-        3788473599.26
-      ],
-      [
-        "Nebraska",
-        3557302905.52
-      ],
-      [
-        "Indiana",
-        3500964169.31
-      ],
-      [
-        "Ohio",
-        3445018928.93
-      ],
-      [
-        "Tennessee",
-        3294011310.58
-      ],
-      [
-        "Minnesota",
-        3237260431.94
-      ],
-      [
-        "Michigan",
-        3225675795.14
-      ],
-      [
-        "Mississippi",
-        3171988650.25
-      ],
-      [
-        "Oklahoma",
-        3071361916.54
-      ],
-      [
-        "Arkansas",
-        2749087422.24
-      ],
-      [
-        "Pennsylvania",
-        2670463404.02
-      ]
-    ]
-  },
-  "customer-vehicle-count-income-band-9": {
-    "columns": [
-      "Customer ID",
-      "Vehicle Count"
-    ],
-    "rows": [
-      [
-        "AAAAAAAAAAAABBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAAFAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAAIAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAAIBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAANAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAAOBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAABFAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAABKBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAABMBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAACIAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAACLBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAACMBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAADBBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAADCAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAADEBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAADKAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAEBAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAECAAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAECBAA",
-        4
-      ],
-      [
-        "AAAAAAAAAAAEGAAA",
-        4
-      ]
-    ]
-  },
-  "net-profit-tier-by-store-gender-2002": {
-    "columns": [
-      "Store Name",
-      "Net Profit Tier",
-      "Gender"
-    ],
-    "rows": [
-      [
-        "able",
-        "0- 50",
-        "F"
-      ],
-      [
-        "able",
-        "0- 50",
-        "M"
-      ],
-      [
-        "able",
-        "50 or Less",
-        "F"
-      ],
-      [
-        "able",
-        "50 or Less",
-        "M"
-      ],
-      [
-        "able",
-        "50-100",
-        "F"
-      ],
-      [
-        "able",
-        "50-100",
-        "M"
-      ],
-      [
-        "able",
-        "100-150",
-        "F"
-      ],
-      [
-        "able",
-        "100-150",
-        "M"
-      ],
-      [
-        "able",
-        "150-200",
-        "F"
-      ],
-      [
-        "able",
-        "150-200",
-        "M"
-      ],
-      [
-        "able",
-        "200-250",
-        "F"
-      ],
-      [
-        "able",
-        "200-250",
-        "M"
-      ],
-      [
-        "able",
-        "2000-3000",
-        "F"
-      ],
-      [
-        "able",
-        "2000-3000",
-        "M"
-      ],
-      [
-        "able",
-        "250-300",
-        "F"
-      ],
-      [
-        "able",
-        "250-300",
-        "M"
-      ],
-      [
-        "able",
-        "300-2000",
-        "F"
-      ],
-      [
-        "able",
-        "300-2000",
-        "M"
-      ],
-      [
-        "able",
-        "3000-25000",
-        "F"
-      ],
-      [
-        "able",
-        "3000-25000",
-        "M"
-      ],
-      [
-        "ation",
-        "0- 50",
-        "F"
-      ],
-      [
-        "ation",
-        "0- 50",
-        "M"
-      ],
-      [
-        "ation",
-        "50 or Less",
-        "F"
-      ],
-      [
-        "ation",
-        "50 or Less",
-        "M"
-      ],
-      [
-        "ation",
-        "50-100",
-        "F"
-      ],
-      [
-        "ation",
-        "50-100",
-        "M"
-      ],
-      [
-        "ation",
-        "100-150",
-        "F"
-      ],
-      [
-        "ation",
-        "100-150",
-        "M"
-      ],
-      [
-        "ation",
-        "150-200",
-        "F"
-      ],
-      [
-        "ation",
-        "150-200",
-        "M"
-      ],
-      [
-        "ation",
-        "200-250",
-        "F"
-      ],
-      [
-        "ation",
-        "200-250",
-        "M"
-      ],
-      [
-        "ation",
-        "2000-3000",
-        "F"
-      ],
-      [
-        "ation",
-        "2000-3000",
-        "M"
-      ],
-      [
-        "ation",
-        "250-300",
-        "F"
-      ],
-      [
-        "ation",
-        "250-300",
-        "M"
-      ],
-      [
-        "ation",
-        "300-2000",
-        "F"
-      ],
-      [
-        "ation",
-        "300-2000",
-        "M"
-      ],
-      [
-        "ation",
-        "3000-25000",
-        "F"
-      ],
-      [
-        "ation",
-        "3000-25000",
-        "M"
-      ],
-      [
-        "bar",
-        "0- 50",
-        "F"
-      ],
-      [
-        "bar",
-        "0- 50",
-        "M"
-      ],
-      [
-        "bar",
-        "50 or Less",
-        "F"
-      ],
-      [
-        "bar",
-        "50 or Less",
-        "M"
-      ],
-      [
-        "bar",
-        "50-100",
-        "F"
-      ],
-      [
-        "bar",
-        "50-100",
-        "M"
-      ],
-      [
-        "bar",
-        "100-150",
-        "F"
-      ],
-      [
-        "bar",
-        "100-150",
-        "M"
-      ],
-      [
-        "bar",
-        "150-200",
-        "F"
-      ],
-      [
-        "bar",
-        "150-200",
-        "M"
-      ],
-      [
-        "bar",
-        "200-250",
-        "F"
-      ],
-      [
-        "bar",
-        "200-250",
-        "M"
-      ],
-      [
-        "bar",
-        "2000-3000",
-        "F"
-      ],
-      [
-        "bar",
-        "2000-3000",
-        "M"
-      ],
-      [
-        "bar",
-        "250-300",
-        "F"
-      ],
-      [
-        "bar",
-        "250-300",
-        "M"
-      ],
-      [
-        "bar",
-        "300-2000",
-        "F"
-      ],
-      [
-        "bar",
-        "300-2000",
-        "M"
-      ],
-      [
-        "bar",
-        "3000-25000",
-        "F"
-      ],
-      [
-        "bar",
-        "3000-25000",
-        "M"
-      ],
-      [
-        "eing",
-        "0- 50",
-        "F"
-      ],
-      [
-        "eing",
-        "0- 50",
-        "M"
-      ],
-      [
-        "eing",
-        "50 or Less",
-        "F"
-      ],
-      [
-        "eing",
-        "50 or Less",
-        "M"
-      ],
-      [
-        "eing",
-        "50-100",
-        "F"
-      ],
-      [
-        "eing",
-        "50-100",
-        "M"
-      ],
-      [
-        "eing",
-        "100-150",
-        "F"
-      ],
-      [
-        "eing",
-        "100-150",
-        "M"
-      ],
-      [
-        "eing",
-        "150-200",
-        "F"
-      ],
-      [
-        "eing",
-        "150-200",
-        "M"
-      ],
-      [
-        "eing",
-        "200-250",
-        "F"
-      ],
-      [
-        "eing",
-        "200-250",
-        "M"
-      ],
-      [
-        "eing",
-        "2000-3000",
-        "F"
-      ],
-      [
-        "eing",
-        "2000-3000",
-        "M"
-      ],
-      [
-        "eing",
-        "250-300",
-        "F"
-      ],
-      [
-        "eing",
-        "250-300",
-        "M"
-      ],
-      [
-        "eing",
-        "300-2000",
-        "F"
-      ],
-      [
-        "eing",
-        "300-2000",
-        "M"
-      ],
-      [
-        "eing",
-        "3000-25000",
-        "F"
-      ],
-      [
-        "eing",
-        "3000-25000",
-        "M"
-      ],
-      [
-        "ese",
-        "0- 50",
-        "F"
-      ],
-      [
-        "ese",
-        "0- 50",
-        "M"
-      ],
-      [
-        "ese",
-        "50 or Less",
-        "F"
-      ],
-      [
-        "ese",
-        "50 or Less",
-        "M"
-      ],
-      [
-        "ese",
-        "50-100",
-        "F"
-      ],
-      [
-        "ese",
-        "50-100",
-        "M"
-      ],
-      [
-        "ese",
-        "100-150",
-        "F"
-      ],
-      [
-        "ese",
-        "100-150",
-        "M"
-      ],
-      [
-        "ese",
-        "150-200",
-        "F"
-      ],
-      [
-        "ese",
-        "150-200",
-        "M"
-      ],
-      [
-        "ese",
-        "200-250",
-        "F"
-      ],
-      [
-        "ese",
-        "200-250",
-        "M"
-      ],
-      [
-        "ese",
-        "2000-3000",
-        "F"
-      ],
-      [
-        "ese",
-        "2000-3000",
-        "M"
-      ],
-      [
-        "ese",
-        "250-300",
-        "F"
-      ],
-      [
-        "ese",
-        "250-300",
-        "M"
-      ],
-      [
-        "ese",
-        "300-2000",
-        "F"
-      ],
-      [
-        "ese",
-        "300-2000",
-        "M"
-      ],
-      [
-        "ese",
-        "3000-25000",
-        "F"
-      ],
-      [
-        "ese",
-        "3000-25000",
-        "M"
-      ],
-      [
-        "ought",
-        "0- 50",
-        "F"
-      ],
-      [
-        "ought",
-        "0- 50",
-        "M"
-      ],
-      [
-        "ought",
-        "50 or Less",
-        "F"
-      ],
-      [
-        "ought",
-        "50 or Less",
-        "M"
-      ],
-      [
-        "ought",
-        "50-100",
-        "F"
-      ],
-      [
-        "ought",
-        "50-100",
-        "M"
-      ],
-      [
-        "ought",
-        "100-150",
-        "F"
-      ],
-      [
-        "ought",
-        "100-150",
-        "M"
-      ],
-      [
-        "ought",
-        "150-200",
-        "F"
-      ],
-      [
-        "ought",
-        "150-200",
-        "M"
-      ],
-      [
-        "ought",
-        "200-250",
-        "F"
-      ],
-      [
-        "ought",
-        "200-250",
-        "M"
-      ],
-      [
-        "ought",
-        "2000-3000",
-        "F"
-      ],
-      [
-        "ought",
-        "2000-3000",
-        "M"
-      ],
-      [
-        "ought",
-        "250-300",
-        "F"
-      ],
-      [
-        "ought",
-        "250-300",
-        "M"
-      ],
-      [
-        "ought",
-        "300-2000",
-        "F"
-      ],
-      [
-        "ought",
-        "300-2000",
-        "M"
-      ],
-      [
-        "ought",
-        "3000-25000",
-        "F"
-      ],
-      [
-        "ought",
-        "3000-25000",
-        "M"
-      ]
-    ]
-  },
-  "customers-ese-store-2001": {
-    "columns": [
-      "Customer First Name",
-      "Gender"
-    ],
-    "rows": [
-      [
-        null,
-        "F"
-      ],
-      [
-        null,
-        "M"
-      ],
-      [
-        "Aaron",
-        "F"
-      ],
-      [
-        "Aaron",
-        "M"
-      ],
-      [
-        "Abby",
-        "F"
-      ],
-      [
-        "Abdul",
-        "M"
-      ],
-      [
-        "Ada",
-        "F"
-      ],
-      [
-        "Adam",
-        "F"
-      ],
-      [
-        "Adam",
-        "M"
-      ],
-      [
-        "Addie",
-        "F"
-      ],
-      [
-        "Adela",
-        "M"
-      ],
-      [
-        "Adelaide",
-        "F"
-      ],
-      [
-        "Adele",
-        "F"
-      ],
-      [
-        "Adele",
-        "M"
-      ],
-      [
-        "Adelina",
-        "F"
-      ],
-      [
-        "Adeline",
-        "F"
-      ],
-      [
-        "Adrian",
-        "F"
-      ],
-      [
-        "Adrian",
-        "M"
-      ],
-      [
-        "Adriana",
-        "F"
-      ],
-      [
-        "Adriana",
-        "M"
-      ]
-    ]
-  },
-  "customer-details-new-jersey": {
-    "columns": [
-      "Customer First Name",
-      "Income Band",
-      "Vehicle Count",
-      "Customer Buy Potential"
-    ],
-    "rows": [
-      [
-        null,
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Aaron",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Adam",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Alan",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Alesha",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Alice",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Alison",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Allen",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Allison",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Alma",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Amy",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Ana",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Andrew",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Angela",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Ann",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Anna",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Anne",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Anthony",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "April",
-        1,
-        -1,
-        "0-500"
-      ],
-      [
-        "Arnold",
-        1,
-        -1,
-        "0-500"
-      ]
-    ]
-  }
+ "express-shipping-carriers": {
+  "columns": [
+   "Carrier"
+  ],
+  "rows": [
+   [
+    "BARIAN"
+   ],
+   [
+    "HARMSTORF"
+   ],
+   [
+    "UPS"
+   ],
+   [
+    "ZHOU"
+   ]
+  ]
+ },
+ "midway-stores": {
+  "columns": [
+   "Store Name",
+   "Store Manager",
+   "Store Floor Space"
+  ],
+  "rows": [
+   [
+    "able",
+    "Scott Smith",
+    5285950
+   ],
+   [
+    "able",
+    "Scott Smith",
+    7557959
+   ],
+   [
+    "ation",
+    "David Thomas",
+    8954883
+   ],
+   [
+    "bar",
+    "Raymond Jacobs",
+    9294113
+   ],
+   [
+    "cally",
+    "Edwin Adams",
+    9026222
+   ],
+   [
+    "eing",
+    "Brett Yates",
+    6995995
+   ],
+   [
+    "ese",
+    "Edwin Adams",
+    9341467
+   ],
+   [
+    "ought",
+    "Raymond Jacobs",
+    9294113
+   ],
+   [
+    "ought",
+    "William Ward",
+    5250760
+   ]
+  ]
+ },
+ "fairview-warehouses": {
+  "columns": [
+   "Warehouse Name",
+   "Warehouse Square Feet"
+  ],
+  "rows": [
+   [
+    "Bad cards must make.",
+    621234
+   ],
+   [
+    "Conventional childr",
+    977787
+   ],
+   [
+    "Doors canno",
+    294242
+   ],
+   [
+    "Important issues liv",
+    138504
+   ],
+   [
+    null,
+    null
+   ]
+  ]
+ },
+ "large-warehouses": {
+  "columns": [
+   "Warehouse Name"
+  ],
+  "rows": [
+   [
+    "Conventional childr"
+   ],
+   [
+    "Doors canno"
+   ],
+   [
+    "Bad cards must make."
+   ]
+  ]
+ },
+ "catalog-customer-count": {
+  "columns": [
+   "Catalog Customer Count"
+  ],
+  "rows": [
+   [
+    1434519
+   ]
+  ]
+ },
+ "total-quantity-sold-per-year": {
+  "columns": [
+   "Sold Calendar Year",
+   "Total Quantity Sold"
+  ],
+  "rows": [
+   [
+    1998,
+    48799970
+   ],
+   [
+    1999,
+    48427413
+   ],
+   [
+    2000,
+    48988922
+   ],
+   [
+    2001,
+    48788022
+   ],
+   [
+    2002,
+    48657316
+   ],
+   [
+    2003,
+    552265
+   ]
+  ]
+ },
+ "product-count-per-category": {
+  "columns": [
+   "Product category",
+   "Total Product Count"
+  ],
+  "rows": [
+   [
+    "Books",
+    1733
+   ],
+   [
+    "Children",
+    1786
+   ],
+   [
+    "Electronics",
+    1812
+   ],
+   [
+    "Home",
+    1807
+   ],
+   [
+    "Jewelry",
+    1740
+   ],
+   [
+    "Men",
+    1811
+   ],
+   [
+    "Music",
+    1860
+   ],
+   [
+    "Shoes",
+    1835
+   ],
+   [
+    "Sports",
+    1783
+   ],
+   [
+    "Women",
+    1790
+   ],
+   [
+    null,
+    43
+   ]
+  ]
+ },
+ "unique-stores-tennessee": {
+  "columns": [
+   "Store Number"
+  ],
+  "rows": [
+   [
+    1
+   ],
+   [
+    2
+   ],
+   [
+    3
+   ],
+   [
+    4
+   ],
+   [
+    5
+   ],
+   [
+    6
+   ],
+   [
+    7
+   ],
+   [
+    8
+   ],
+   [
+    9
+   ],
+   [
+    10
+   ],
+   [
+    11
+   ],
+   [
+    12
+   ]
+  ]
+ },
+ "corpcorp-brand-products": {
+  "columns": [
+   "Item Product Name"
+  ],
+  "rows": [
+   [
+    "ablen stationationought"
+   ],
+   [
+    "ableoughtpripri"
+   ],
+   [
+    "ablepriableoughtought"
+   ],
+   [
+    "barableanti"
+   ],
+   [
+    "barableationantiought"
+   ],
+   [
+    "bareingablecallyought"
+   ],
+   [
+    "callyantibarpri"
+   ],
+   [
+    "callyantieseeing"
+   ],
+   [
+    "callyationantieing"
+   ],
+   [
+    "callyn steingantiought"
+   ],
+   [
+    "callyn steingese"
+   ],
+   [
+    "callypripriableought"
+   ],
+   [
+    "eingableantioughtought"
+   ],
+   [
+    "eseablecallypri"
+   ],
+   [
+    "eseeseanticallyought"
+   ]
+  ]
+ },
+ "able-manufacturer-brands": {
+  "columns": [
+   "Product Brand Name"
+  ],
+  "rows": [
+   [
+    "amalgexporti #1"
+   ],
+   [
+    "amalgexporti #2"
+   ],
+   [
+    "amalgimporto #1"
+   ],
+   [
+    "amalgimporto #2"
+   ],
+   [
+    "amalgnameless #7"
+   ],
+   [
+    "amalgscholar #1"
+   ],
+   [
+    "brandnameless #3"
+   ],
+   [
+    "edu packamalg #2"
+   ],
+   [
+    "edu packexporti #2"
+   ],
+   [
+    "edu packimporto #2"
+   ],
+   [
+    "edu packmaxi #1"
+   ],
+   [
+    "exportiamalg #1"
+   ],
+   [
+    "exportiamalg #2"
+   ],
+   [
+    "exportiamalgamalg #6"
+   ],
+   [
+    "exportiedu pack #2"
+   ],
+   [
+    "exportiimporto #1"
+   ],
+   [
+    "exportiimporto #2"
+   ],
+   [
+    "exportiimporto #2"
+   ],
+   [
+    "exportinameless #8"
+   ],
+   [
+    "importoamalg #2"
+   ],
+   [
+    "importoexporti #2"
+   ],
+   [
+    "importoimporto #1"
+   ],
+   [
+    "importonameless #9"
+   ],
+   [
+    "importoscholar #2"
+   ],
+   [
+    "maxibrand #7"
+   ],
+   [
+    "namelessbrand #4"
+   ],
+   [
+    "scholarmaxi #12"
+   ],
+   [
+    "scholarmaxi #7"
+   ],
+   [
+    "scholarnameless #7"
+   ],
+   [
+    "univunivamalg #4"
+   ]
+  ]
+ },
+ "store-employee-counts": {
+  "columns": [
+   "Store Name",
+   "Store Number of Employees"
+  ],
+  "rows": [
+   [
+    "ation",
+    297
+   ],
+   [
+    "bar",
+    294
+   ],
+   [
+    "ought",
+    294
+   ],
+   [
+    "anti",
+    288
+   ],
+   [
+    "eing",
+    278
+   ],
+   [
+    "eing",
+    271
+   ],
+   [
+    "ought",
+    245
+   ],
+   [
+    "able",
+    236
+   ],
+   [
+    "cally",
+    229
+   ],
+   [
+    "ese",
+    218
+   ]
+  ]
+ },
+ "store-returns-per-product": {
+  "columns": [
+   "Item Product Name",
+   "Store Returns Count"
+  ],
+  "rows": [
+   [
+    null,
+    442
+   ],
+   [
+    "oughteingeinganti",
+    41
+   ],
+   [
+    "oughtbareseable",
+    40
+   ],
+   [
+    "antioughtese",
+    39
+   ],
+   [
+    "ationprieingation",
+    39
+   ],
+   [
+    "ationbarationeseought",
+    38
+   ],
+   [
+    "antibaroughtpriought",
+    37
+   ],
+   [
+    "priesebarableought",
+    37
+   ],
+   [
+    "prin stationcally",
+    37
+   ],
+   [
+    "antiationeinganti",
+    36
+   ],
+   [
+    "antibarationbarought",
+    36
+   ],
+   [
+    "antieinganticallyought",
+    36
+   ],
+   [
+    "antieseantioughtought",
+    36
+   ],
+   [
+    "antin stantipri",
+    36
+   ],
+   [
+    "ationbarn stcally",
+    36
+   ],
+   [
+    "ationeingpriought",
+    36
+   ],
+   [
+    "ationprianticallyought",
+    36
+   ],
+   [
+    "n stanticallyeseought",
+    36
+   ],
+   [
+    "n stationableese",
+    36
+   ],
+   [
+    "oughtablebarese",
+    36
+   ]
+  ]
+ },
+ "avg-sales-quantity-per-store": {
+  "columns": [
+   "Store Number",
+   "Average Store Sales Quantity"
+  ],
+  "rows": [
+   [
+    2,
+    50.5936442439659
+   ],
+   [
+    7,
+    50.55502265092984
+   ],
+   [
+    1,
+    50.550020846689414
+   ],
+   [
+    10,
+    50.47919908681093
+   ],
+   [
+    8,
+    50.47613176523048
+   ],
+   [
+    4,
+    50.43842163027273
+   ]
+  ]
+ },
+ "total-net-profit-per-product": {
+  "columns": [
+   "Item Product Name",
+   "Total Net Profit"
+  ],
+  "rows": [
+   [
+    "eingbaration",
+    8341.36
+   ],
+   [
+    "barpribarpri",
+    4787.82
+   ],
+   [
+    "barbaroughteing",
+    4720.61
+   ],
+   [
+    "barn stbarcally",
+    2905.51
+   ],
+   [
+    "callyn stcallycally",
+    2304.23
+   ],
+   [
+    "ableantiprieseought",
+    2295.77
+   ],
+   [
+    "eingableeingpri",
+    1453.22
+   ],
+   [
+    "eingn steinganti",
+    -317.89
+   ],
+   [
+    "ablebareingationought",
+    -480.15
+   ],
+   [
+    "esebarbareing",
+    -2099.76
+   ],
+   [
+    "eingablepriable",
+    -4674.84
+   ],
+   [
+    "ablen stcallyese",
+    -5024.39
+   ],
+   [
+    "callyantioughtpri",
+    -5653.65
+   ],
+   [
+    "ablen stableoughtought",
+    -6150.72
+   ],
+   [
+    "esebarantically",
+    -7536.0
+   ],
+   [
+    "eseesen stanti",
+    -8033.4
+   ],
+   [
+    "callyeseationbarought",
+    -8137.5
+   ],
+   [
+    "ableprieseantiought",
+    -8536.09
+   ],
+   [
+    "eingoughteseeseought",
+    -8805.91
+   ],
+   [
+    "eseationeingeing",
+    -10171.42
+   ]
+  ]
+ },
+ "store-quantity-sold-per-brand": {
+  "columns": [
+   "Product Brand Name",
+   "Store Quantity Sold"
+  ],
+  "rows": [
+   [
+    "importoedu pack #2",
+    1867392
+   ],
+   [
+    "edu packscholar #2",
+    1782707
+   ],
+   [
+    "importoexporti #2",
+    1755963
+   ],
+   [
+    "exportischolar #2",
+    1710205
+   ],
+   [
+    "edu packamalg #2",
+    1700536
+   ],
+   [
+    "importoamalg #2",
+    1666133
+   ],
+   [
+    "importoscholar #2",
+    1662656
+   ],
+   [
+    "amalgedu pack #2",
+    1638758
+   ],
+   [
+    "edu packexporti #2",
+    1638400
+   ],
+   [
+    "edu packedu pack #2",
+    1631065
+   ],
+   [
+    "amalgamalg #2",
+    1611899
+   ],
+   [
+    "importoimporto #2",
+    1611493
+   ],
+   [
+    "exportiedu pack #2",
+    1551659
+   ],
+   [
+    "exportiimporto #2",
+    1512891
+   ],
+   [
+    "edu packscholar #1",
+    1507327
+   ],
+   [
+    "amalgexporti #2",
+    1484644
+   ],
+   [
+    "importoimporto #1",
+    1478419
+   ],
+   [
+    "exportiexporti #2",
+    1475602
+   ],
+   [
+    "amalgimporto #2",
+    1473915
+   ],
+   [
+    "amalgscholar #2",
+    1453486
+   ]
+  ]
+ },
+ "web-sales-per-customer-state": {
+  "columns": [
+   "Customer State Name",
+   "Web Sales"
+  ],
+  "rows": [
+   [
+    "Texas",
+    9421508812.87
+   ],
+   [
+    "Georgia",
+    6036697266.41
+   ],
+   [
+    "Virginia",
+    5318563182.95
+   ],
+   [
+    "Kentucky",
+    4574601530.26
+   ],
+   [
+    "North Carolina",
+    4141003227.38
+   ],
+   [
+    "Missouri",
+    4068598209.69
+   ],
+   [
+    "Kansas",
+    4063557140.51
+   ],
+   [
+    "Illinois",
+    3923328445.75
+   ],
+   [
+    "Iowa",
+    3852920157.99
+   ],
+   [
+    null,
+    3788473599.26
+   ],
+   [
+    "Nebraska",
+    3557302905.52
+   ],
+   [
+    "Indiana",
+    3500964169.31
+   ],
+   [
+    "Ohio",
+    3445018928.93
+   ],
+   [
+    "Tennessee",
+    3294011310.58
+   ],
+   [
+    "Minnesota",
+    3237260431.94
+   ],
+   [
+    "Michigan",
+    3225675795.14
+   ],
+   [
+    "Mississippi",
+    3171988650.25
+   ],
+   [
+    "Oklahoma",
+    3071361916.54
+   ],
+   [
+    "Arkansas",
+    2749087422.24
+   ],
+   [
+    "Pennsylvania",
+    2670463404.02
+   ]
+  ]
+ },
+ "customer-vehicle-count-income-band-9": {
+  "columns": [
+   "Customer ID",
+   "Vehicle Count"
+  ],
+  "rows": [
+   [
+    "AAAAAAAAAAAABBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAAFAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAAIAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAAIBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAANAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAAOBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAABFAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAABKBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAABMBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAACIAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAACLBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAACMBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAADBBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAADCAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAADEBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAADKAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAEBAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAECAAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAECBAA",
+    4
+   ],
+   [
+    "AAAAAAAAAAAEGAAA",
+    4
+   ]
+  ]
+ },
+ "net-profit-tier-by-store-gender-2002": {
+  "columns": [
+   "Store Name",
+   "Net Profit Tier",
+   "Gender"
+  ],
+  "rows": [
+   [
+    "able",
+    "0- 50",
+    "F"
+   ],
+   [
+    "able",
+    "0- 50",
+    "M"
+   ],
+   [
+    "able",
+    "50 or Less",
+    "F"
+   ],
+   [
+    "able",
+    "50 or Less",
+    "M"
+   ],
+   [
+    "able",
+    "50-100",
+    "F"
+   ],
+   [
+    "able",
+    "50-100",
+    "M"
+   ],
+   [
+    "able",
+    "100-150",
+    "F"
+   ],
+   [
+    "able",
+    "100-150",
+    "M"
+   ],
+   [
+    "able",
+    "150-200",
+    "F"
+   ],
+   [
+    "able",
+    "150-200",
+    "M"
+   ],
+   [
+    "able",
+    "200-250",
+    "F"
+   ],
+   [
+    "able",
+    "200-250",
+    "M"
+   ],
+   [
+    "able",
+    "2000-3000",
+    "F"
+   ],
+   [
+    "able",
+    "2000-3000",
+    "M"
+   ],
+   [
+    "able",
+    "250-300",
+    "F"
+   ],
+   [
+    "able",
+    "250-300",
+    "M"
+   ],
+   [
+    "able",
+    "300-2000",
+    "F"
+   ],
+   [
+    "able",
+    "300-2000",
+    "M"
+   ],
+   [
+    "able",
+    "3000-25000",
+    "F"
+   ],
+   [
+    "able",
+    "3000-25000",
+    "M"
+   ],
+   [
+    "ation",
+    "0- 50",
+    "F"
+   ],
+   [
+    "ation",
+    "0- 50",
+    "M"
+   ],
+   [
+    "ation",
+    "50 or Less",
+    "F"
+   ],
+   [
+    "ation",
+    "50 or Less",
+    "M"
+   ],
+   [
+    "ation",
+    "50-100",
+    "F"
+   ],
+   [
+    "ation",
+    "50-100",
+    "M"
+   ],
+   [
+    "ation",
+    "100-150",
+    "F"
+   ],
+   [
+    "ation",
+    "100-150",
+    "M"
+   ],
+   [
+    "ation",
+    "150-200",
+    "F"
+   ],
+   [
+    "ation",
+    "150-200",
+    "M"
+   ],
+   [
+    "ation",
+    "200-250",
+    "F"
+   ],
+   [
+    "ation",
+    "200-250",
+    "M"
+   ],
+   [
+    "ation",
+    "2000-3000",
+    "F"
+   ],
+   [
+    "ation",
+    "2000-3000",
+    "M"
+   ],
+   [
+    "ation",
+    "250-300",
+    "F"
+   ],
+   [
+    "ation",
+    "250-300",
+    "M"
+   ],
+   [
+    "ation",
+    "300-2000",
+    "F"
+   ],
+   [
+    "ation",
+    "300-2000",
+    "M"
+   ],
+   [
+    "ation",
+    "3000-25000",
+    "F"
+   ],
+   [
+    "ation",
+    "3000-25000",
+    "M"
+   ],
+   [
+    "bar",
+    "0- 50",
+    "F"
+   ],
+   [
+    "bar",
+    "0- 50",
+    "M"
+   ],
+   [
+    "bar",
+    "50 or Less",
+    "F"
+   ],
+   [
+    "bar",
+    "50 or Less",
+    "M"
+   ],
+   [
+    "bar",
+    "50-100",
+    "F"
+   ],
+   [
+    "bar",
+    "50-100",
+    "M"
+   ],
+   [
+    "bar",
+    "100-150",
+    "F"
+   ],
+   [
+    "bar",
+    "100-150",
+    "M"
+   ],
+   [
+    "bar",
+    "150-200",
+    "F"
+   ],
+   [
+    "bar",
+    "150-200",
+    "M"
+   ],
+   [
+    "bar",
+    "200-250",
+    "F"
+   ],
+   [
+    "bar",
+    "200-250",
+    "M"
+   ],
+   [
+    "bar",
+    "2000-3000",
+    "F"
+   ],
+   [
+    "bar",
+    "2000-3000",
+    "M"
+   ],
+   [
+    "bar",
+    "250-300",
+    "F"
+   ],
+   [
+    "bar",
+    "250-300",
+    "M"
+   ],
+   [
+    "bar",
+    "300-2000",
+    "F"
+   ],
+   [
+    "bar",
+    "300-2000",
+    "M"
+   ],
+   [
+    "bar",
+    "3000-25000",
+    "F"
+   ],
+   [
+    "bar",
+    "3000-25000",
+    "M"
+   ],
+   [
+    "eing",
+    "0- 50",
+    "F"
+   ],
+   [
+    "eing",
+    "0- 50",
+    "M"
+   ],
+   [
+    "eing",
+    "50 or Less",
+    "F"
+   ],
+   [
+    "eing",
+    "50 or Less",
+    "M"
+   ],
+   [
+    "eing",
+    "50-100",
+    "F"
+   ],
+   [
+    "eing",
+    "50-100",
+    "M"
+   ],
+   [
+    "eing",
+    "100-150",
+    "F"
+   ],
+   [
+    "eing",
+    "100-150",
+    "M"
+   ],
+   [
+    "eing",
+    "150-200",
+    "F"
+   ],
+   [
+    "eing",
+    "150-200",
+    "M"
+   ],
+   [
+    "eing",
+    "200-250",
+    "F"
+   ],
+   [
+    "eing",
+    "200-250",
+    "M"
+   ],
+   [
+    "eing",
+    "2000-3000",
+    "F"
+   ],
+   [
+    "eing",
+    "2000-3000",
+    "M"
+   ],
+   [
+    "eing",
+    "250-300",
+    "F"
+   ],
+   [
+    "eing",
+    "250-300",
+    "M"
+   ],
+   [
+    "eing",
+    "300-2000",
+    "F"
+   ],
+   [
+    "eing",
+    "300-2000",
+    "M"
+   ],
+   [
+    "eing",
+    "3000-25000",
+    "F"
+   ],
+   [
+    "eing",
+    "3000-25000",
+    "M"
+   ],
+   [
+    "ese",
+    "0- 50",
+    "F"
+   ],
+   [
+    "ese",
+    "0- 50",
+    "M"
+   ],
+   [
+    "ese",
+    "50 or Less",
+    "F"
+   ],
+   [
+    "ese",
+    "50 or Less",
+    "M"
+   ],
+   [
+    "ese",
+    "50-100",
+    "F"
+   ],
+   [
+    "ese",
+    "50-100",
+    "M"
+   ],
+   [
+    "ese",
+    "100-150",
+    "F"
+   ],
+   [
+    "ese",
+    "100-150",
+    "M"
+   ],
+   [
+    "ese",
+    "150-200",
+    "F"
+   ],
+   [
+    "ese",
+    "150-200",
+    "M"
+   ],
+   [
+    "ese",
+    "200-250",
+    "F"
+   ],
+   [
+    "ese",
+    "200-250",
+    "M"
+   ],
+   [
+    "ese",
+    "2000-3000",
+    "F"
+   ],
+   [
+    "ese",
+    "2000-3000",
+    "M"
+   ],
+   [
+    "ese",
+    "250-300",
+    "F"
+   ],
+   [
+    "ese",
+    "250-300",
+    "M"
+   ],
+   [
+    "ese",
+    "300-2000",
+    "F"
+   ],
+   [
+    "ese",
+    "300-2000",
+    "M"
+   ],
+   [
+    "ese",
+    "3000-25000",
+    "F"
+   ],
+   [
+    "ese",
+    "3000-25000",
+    "M"
+   ],
+   [
+    "ought",
+    "0- 50",
+    "F"
+   ],
+   [
+    "ought",
+    "0- 50",
+    "M"
+   ],
+   [
+    "ought",
+    "50 or Less",
+    "F"
+   ],
+   [
+    "ought",
+    "50 or Less",
+    "M"
+   ],
+   [
+    "ought",
+    "50-100",
+    "F"
+   ],
+   [
+    "ought",
+    "50-100",
+    "M"
+   ],
+   [
+    "ought",
+    "100-150",
+    "F"
+   ],
+   [
+    "ought",
+    "100-150",
+    "M"
+   ],
+   [
+    "ought",
+    "150-200",
+    "F"
+   ],
+   [
+    "ought",
+    "150-200",
+    "M"
+   ],
+   [
+    "ought",
+    "200-250",
+    "F"
+   ],
+   [
+    "ought",
+    "200-250",
+    "M"
+   ],
+   [
+    "ought",
+    "2000-3000",
+    "F"
+   ],
+   [
+    "ought",
+    "2000-3000",
+    "M"
+   ],
+   [
+    "ought",
+    "250-300",
+    "F"
+   ],
+   [
+    "ought",
+    "250-300",
+    "M"
+   ],
+   [
+    "ought",
+    "300-2000",
+    "F"
+   ],
+   [
+    "ought",
+    "300-2000",
+    "M"
+   ],
+   [
+    "ought",
+    "3000-25000",
+    "F"
+   ],
+   [
+    "ought",
+    "3000-25000",
+    "M"
+   ]
+  ]
+ },
+ "customers-ese-store-2001": {
+  "columns": [
+   "Customer First Name",
+   "Gender"
+  ],
+  "rows": [
+   [
+    null,
+    "F"
+   ],
+   [
+    null,
+    "M"
+   ],
+   [
+    "Aaron",
+    "F"
+   ],
+   [
+    "Aaron",
+    "M"
+   ],
+   [
+    "Abby",
+    "F"
+   ],
+   [
+    "Abdul",
+    "M"
+   ],
+   [
+    "Ada",
+    "F"
+   ],
+   [
+    "Adam",
+    "F"
+   ],
+   [
+    "Adam",
+    "M"
+   ],
+   [
+    "Addie",
+    "F"
+   ],
+   [
+    "Adela",
+    "M"
+   ],
+   [
+    "Adelaide",
+    "F"
+   ],
+   [
+    "Adele",
+    "F"
+   ],
+   [
+    "Adele",
+    "M"
+   ],
+   [
+    "Adelina",
+    "F"
+   ],
+   [
+    "Adeline",
+    "F"
+   ],
+   [
+    "Adrian",
+    "F"
+   ],
+   [
+    "Adrian",
+    "M"
+   ],
+   [
+    "Adriana",
+    "F"
+   ],
+   [
+    "Adriana",
+    "M"
+   ]
+  ]
+ },
+ "customer-details-new-jersey": {
+  "columns": [
+   "Customer First Name",
+   "Income Band",
+   "Vehicle Count",
+   "Customer Buy Potential"
+  ],
+  "rows": [
+   [
+    null,
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Aaron",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Adam",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Alan",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Alesha",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Alice",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Alison",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Allen",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Allison",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Alma",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Amy",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Ana",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Andrew",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Angela",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Ann",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Anna",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Anne",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Anthony",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "April",
+    1,
+    -1,
+    "0-500"
+   ],
+   [
+    "Arnold",
+    1,
+    -1,
+    "0-500"
+   ]
+  ]
+ },
+ "products-price-above-70": {
+  "columns": [
+   "Item Product Name"
+  ],
+  "rows": [
+   [
+    "n stn stpriableought"
+   ],
+   [
+    "antibaresepriought"
+   ],
+   [
+    "n stableoughtanti"
+   ],
+   [
+    "eingcallyationese"
+   ],
+   [
+    "callybarantipri"
+   ],
+   [
+    "ationableantipri"
+   ],
+   [
+    "pribaroughtable"
+   ],
+   [
+    "ationableationcallyought"
+   ],
+   [
+    "priationbareing"
+   ],
+   [
+    "ationantiationcallyought"
+   ],
+   [
+    "baresecallyantiought"
+   ],
+   [
+    "antibarbaroughtought"
+   ],
+   [
+    "callyprieseation"
+   ],
+   [
+    "ationeingantieseought"
+   ],
+   [
+    "callypriationought"
+   ],
+   [
+    "priationationantiought"
+   ],
+   [
+    "bareseable"
+   ],
+   [
+    "n stantioughtationought"
+   ],
+   [
+    "oughteingbarcally"
+   ],
+   [
+    "eingantioughtoughtought"
+   ],
+   [
+    "barbarationn st"
+   ],
+   [
+    "ablebarableableought"
+   ],
+   [
+    "n stcallyeingn st"
+   ],
+   [
+    "barn stableeing"
+   ],
+   [
+    "anticallyn stn st"
+   ],
+   [
+    "callypriprianti"
+   ],
+   [
+    "callyantioughtable"
+   ],
+   [
+    "eingbarantipri"
+   ],
+   [
+    "barbarbarcally"
+   ],
+   [
+    "ableoughtableanti"
+   ],
+   [
+    "ableeseeseationought"
+   ],
+   [
+    "n steseableese"
+   ],
+   [
+    "bareingprieseought"
+   ],
+   [
+    "oughtprin st"
+   ],
+   [
+    "ablepriese"
+   ],
+   [
+    "callyantieingese"
+   ],
+   [
+    "barn stcallyought"
+   ],
+   [
+    "eingcallycallyn st"
+   ],
+   [
+    "oughtbaroughtpriought"
+   ],
+   [
+    "antipricallyantiought"
+   ],
+   [
+    "esen stbareseought"
+   ],
+   [
+    "callyprieing"
+   ],
+   [
+    "ablepribaration"
+   ],
+   [
+    "eingbarableation"
+   ],
+   [
+    "priprieingese"
+   ],
+   [
+    "ablebarpriation"
+   ],
+   [
+    "oughtoughteingpriought"
+   ],
+   [
+    "n stpricallycally"
+   ],
+   [
+    "esen stcallypriought"
+   ],
+   [
+    "barationeingbarought"
+   ],
+   [
+    "oughtcallybarpriought"
+   ],
+   [
+    "antin stn stanti"
+   ],
+   [
+    "oughtationationable"
+   ],
+   [
+    "esen stesepri"
+   ],
+   [
+    "callyeseationeseought"
+   ],
+   [
+    "antipribaroughtought"
+   ],
+   [
+    "ationcallyableantiought"
+   ],
+   [
+    "antiantiationableought"
+   ],
+   [
+    "ableationbarn st"
+   ],
+   [
+    "esecallyesecally"
+   ],
+   [
+    "antieingn stantiought"
+   ],
+   [
+    "eseablecallyought"
+   ],
+   [
+    "oughtcallyantiable"
+   ],
+   [
+    "callyablebarable"
+   ],
+   [
+    "eingpribarbarought"
+   ],
+   [
+    "n stpriable"
+   ],
+   [
+    "barcallybarcallyought"
+   ],
+   [
+    "eingablepriought"
+   ],
+   [
+    "pripriableeseought"
+   ],
+   [
+    "n stcallyeseantiought"
+   ],
+   [
+    "n stantieingable"
+   ],
+   [
+    "pribarbarantiought"
+   ],
+   [
+    "prin steingeing"
+   ],
+   [
+    "ableantieingcallyought"
+   ],
+   [
+    "ablebarantipri"
+   ],
+   [
+    "eseationationable"
+   ],
+   [
+    "oughteingeseeing"
+   ],
+   [
+    "ablecallyationable"
+   ],
+   [
+    "esepriableationought"
+   ],
+   [
+    "callyn stbarableought"
+   ],
+   [
+    "antin stableoughtought"
+   ],
+   [
+    "oughtpriprieseought"
+   ],
+   [
+    "eseeseantipri"
+   ],
+   [
+    "eseprioughtationought"
+   ],
+   [
+    "eingablen steing"
+   ],
+   [
+    "eseeingeingationought"
+   ],
+   [
+    "ableesecallypriought"
+   ],
+   [
+    "n stprioughtation"
+   ],
+   [
+    "n stanticallybarought"
+   ],
+   [
+    "callycallyoughtn st"
+   ],
+   [
+    "priationationpriought"
+   ],
+   [
+    "antibarn stable"
+   ],
+   [
+    "pricallyprieseought"
+   ],
+   [
+    "eseeingablecallyought"
+   ],
+   [
+    "n stn stantibarought"
+   ],
+   [
+    "eingprin st"
+   ],
+   [
+    "ationeseprically"
+   ],
+   [
+    "priableesepri"
+   ],
+   [
+    "eseationcallyable"
+   ],
+   [
+    "barn stoughtn st"
+   ],
+   [
+    "oughtanticallyeing"
+   ],
+   [
+    "barbarantieseought"
+   ],
+   [
+    "barn stpriought"
+   ],
+   [
+    "ationcallyationeing"
+   ],
+   [
+    "pripricallyese"
+   ],
+   [
+    "ablecallyeingpriought"
+   ],
+   [
+    "bareseantianti"
+   ],
+   [
+    "callyn stcallyn st"
+   ],
+   [
+    "callypriablebarought"
+   ],
+   [
+    "oughtpriationantiought"
+   ],
+   [
+    "antieingationationought"
+   ],
+   [
+    "priablebarableought"
+   ],
+   [
+    "n stcallyoughtoughtought"
+   ],
+   [
+    "esen stableought"
+   ],
+   [
+    "oughtn stcallyoughtought"
+   ],
+   [
+    "ationbarpricallyought"
+   ],
+   [
+    "baresepriese"
+   ],
+   [
+    "prieseableought"
+   ],
+   [
+    "oughtablepriought"
+   ],
+   [
+    "antin stbarese"
+   ],
+   [
+    "oughteseeingpriought"
+   ],
+   [
+    "oughtationoughtought"
+   ],
+   [
+    "ationeseesen st"
+   ],
+   [
+    "callyeseantieseought"
+   ],
+   [
+    "eseantiableought"
+   ],
+   [
+    "barbarn stanti"
+   ],
+   [
+    "eingationesebarought"
+   ],
+   [
+    "callyese"
+   ],
+   [
+    "callyantipripri"
+   ],
+   [
+    "ationoughtantiought"
+   ],
+   [
+    "oughtationationation"
+   ],
+   [
+    "ableoughtn stoughtought"
+   ],
+   [
+    "priantieseanti"
+   ],
+   [
+    "callyn stoughtoughtought"
+   ],
+   [
+    "eseoughtn stn st"
+   ],
+   [
+    "ationoughtcallyantiought"
+   ],
+   [
+    "esepripripriought"
+   ],
+   [
+    "oughtablen stpriought"
+   ],
+   [
+    "esepriesepri"
+   ],
+   [
+    "n stcallycallycally"
+   ],
+   [
+    "eingoughtcallypri"
+   ],
+   [
+    "antiprioughteseought"
+   ],
+   [
+    "ationeseoughtcallyought"
+   ],
+   [
+    "bareingableese"
+   ],
+   [
+    "callyn stn stable"
+   ],
+   [
+    "oughtcallypripri"
+   ],
+   [
+    "priantiableation"
+   ],
+   [
+    "eingantiablecally"
+   ],
+   [
+    "pribaroughtationought"
+   ],
+   [
+    "prioughtcallyableought"
+   ],
+   [
+    "ationeingeingcallyought"
+   ],
+   [
+    "ablebaroughtable"
+   ],
+   [
+    "oughtoughteseeseought"
+   ],
+   [
+    "barn stn stpriought"
+   ],
+   [
+    "ationbarbarable"
+   ],
+   [
+    "ablen steingcallyought"
+   ],
+   [
+    "oughtn stoughtantiought"
+   ],
+   [
+    "eseeingbarationought"
+   ],
+   [
+    "n stationationn st"
+   ],
+   [
+    "eseationeseeseought"
+   ],
+   [
+    "eseeingn stn st"
+   ],
+   [
+    "antieseoughtn st"
+   ],
+   [
+    "esen stableableought"
+   ],
+   [
+    "bareingn stbarought"
+   ],
+   [
+    "oughtn stpriantiought"
+   ],
+   [
+    "oughtprieseation"
+   ],
+   [
+    "antiationeseought"
+   ],
+   [
+    "ableeingeseation"
+   ],
+   [
+    "oughteingprioughtought"
+   ],
+   [
+    "prianticallypri"
+   ],
+   [
+    "bareseablecallyought"
+   ],
+   [
+    "callypricallyableought"
+   ],
+   [
+    "n stbarpricallyought"
+   ],
+   [
+    "antiationn st"
+   ],
+   [
+    "prieseantioughtought"
+   ],
+   [
+    "ableeseableeseought"
+   ],
+   [
+    "oughteinganticallyought"
+   ],
+   [
+    "callyoughtbarantiought"
+   ],
+   [
+    "eingationpriableought"
+   ],
+   [
+    "priablecallyationought"
+   ],
+   [
+    "barantioughtationought"
+   ],
+   [
+    "prioughtesepriought"
+   ],
+   [
+    "n steingn stoughtought"
+   ],
+   [
+    "n steingablepri"
+   ],
+   [
+    "callyantiese"
+   ],
+   [
+    "antipriableable"
+   ],
+   [
+    "ableanticallyableought"
+   ],
+   [
+    "barableantiation"
+   ],
+   [
+    "eingeingableeseought"
+   ],
+   [
+    "ablebarbarought"
+   ],
+   [
+    "barationationese"
+   ],
+   [
+    "ableeingationeing"
+   ],
+   [
+    "oughtprin steseought"
+   ],
+   [
+    "barationableationought"
+   ],
+   [
+    "prieseantiableought"
+   ],
+   [
+    "barn stoughtbarought"
+   ],
+   [
+    "antiantiableation"
+   ],
+   [
+    "barbarableoughtought"
+   ],
+   [
+    "callyeingantiableought"
+   ],
+   [
+    "n stableeingable"
+   ],
+   [
+    "oughtprieingantiought"
+   ],
+   [
+    "ablepriprioughtought"
+   ],
+   [
+    "ationationeseanti"
+   ],
+   [
+    "oughtoughtn steing"
+   ],
+   [
+    "ableoughtbarese"
+   ],
+   [
+    "callyn steseable"
+   ],
+   [
+    "ationpriationeseought"
+   ],
+   [
+    "n steingationcallyought"
+   ],
+   [
+    "antiationn stpri"
+   ],
+   [
+    "callycallybarpri"
+   ],
+   [
+    "pribarcallyought"
+   ],
+   [
+    "eingbareinganti"
+   ],
+   [
+    "baresen stationought"
+   ],
+   [
+    "callyn stcallycally"
+   ],
+   [
+    "eseationantin st"
+   ],
+   [
+    "oughtn stablebarought"
+   ],
+   [
+    "oughtbarn stanti"
+   ],
+   [
+    "priablen stantiought"
+   ],
+   [
+    "antiantin st"
+   ],
+   [
+    "antioughtn stcally"
+   ],
+   [
+    "n stoughtcallypri"
+   ],
+   [
+    "eseeseationought"
+   ],
+   [
+    "antiantiantianti"
+   ],
+   [
+    "ationationableationought"
+   ],
+   [
+    "n steingeingbarought"
+   ],
+   [
+    "eseeingeingation"
+   ],
+   [
+    "antieseeingable"
+   ],
+   [
+    "oughtn stantieing"
+   ],
+   [
+    "esen stationpriought"
+   ],
+   [
+    "ationeingcallyantiought"
+   ],
+   [
+    "n stn stn stanti"
+   ],
+   [
+    "ablecallybareseought"
+   ],
+   [
+    "eseeingationn st"
+   ],
+   [
+    "oughtpriought"
+   ],
+   [
+    "eseableantiese"
+   ],
+   [
+    "eingeseeingeing"
+   ],
+   [
+    "barcallyantipri"
+   ],
+   [
+    "priantioughtn st"
+   ],
+   [
+    "n steingoughtantiought"
+   ],
+   [
+    "ationcallybarpri"
+   ],
+   [
+    "ableoughtationationought"
+   ],
+   [
+    "ableeingeingpriought"
+   ],
+   [
+    "oughtesebarese"
+   ],
+   [
+    "eingesebarpri"
+   ],
+   [
+    "ablecallypriable"
+   ],
+   [
+    "n stationable"
+   ],
+   [
+    "antioughtoughtpri"
+   ],
+   [
+    "ableoughtbarought"
+   ],
+   [
+    "oughtcallyantiationought"
+   ],
+   [
+    "n stn steseableought"
+   ],
+   [
+    "eingbarn stable"
+   ],
+   [
+    "priantioughtationought"
+   ],
+   [
+    "eingn stoughtcallyought"
+   ],
+   [
+    "antipriantiable"
+   ],
+   [
+    "esebarpri"
+   ],
+   [
+    "n stn steseationought"
+   ],
+   [
+    "ableeseeseable"
+   ],
+   [
+    "anticallyationcally"
+   ],
+   [
+    "oughtableationcally"
+   ],
+   [
+    "ationn stantin st"
+   ],
+   [
+    "callyablebarought"
+   ],
+   [
+    "bareingn stese"
+   ],
+   [
+    "eingbarn stcallyought"
+   ],
+   [
+    "ationbareseationought"
+   ],
+   [
+    "n stn steseation"
+   ],
+   [
+    "ationn steseation"
+   ],
+   [
+    "oughtoughtbarese"
+   ],
+   [
+    "ationantieingn st"
+   ],
+   [
+    "oughtoughtn stantiought"
+   ],
+   [
+    "eseablebarpri"
+   ],
+   [
+    "priantiprioughtought"
+   ],
+   [
+    "priationablen st"
+   ],
+   [
+    "oughtantin stbarought"
+   ],
+   [
+    "esepripriese"
+   ],
+   [
+    "oughtcallyprioughtought"
+   ],
+   [
+    "anticallyn stought"
+   ],
+   [
+    "eseprioughtcally"
+   ],
+   [
+    "bareingationcally"
+   ],
+   [
+    "callybareingn st"
+   ],
+   [
+    "oughtationoughtcally"
+   ],
+   [
+    "antieingoughtationought"
+   ],
+   [
+    "eingeseeingought"
+   ],
+   [
+    "callyantieingoughtought"
+   ],
+   [
+    "n stn stoughtation"
+   ],
+   [
+    "ationoughtbareseought"
+   ],
+   [
+    "antiableableableought"
+   ],
+   [
+    "antipriprieing"
+   ],
+   [
+    "n stpribarationought"
+   ],
+   [
+    "esecallypricallyought"
+   ],
+   [
+    "ableableationcallyought"
+   ],
+   [
+    "ableoughtanticallyought"
+   ],
+   [
+    "eseeseprioughtought"
+   ],
+   [
+    "callyationantiableought"
+   ],
+   [
+    "bareseantin st"
+   ],
+   [
+    "ationablen stationought"
+   ],
+   [
+    "ationeseesepri"
+   ],
+   [
+    "eingbarbaranti"
+   ],
+   [
+    "oughtbarableationought"
+   ],
+   [
+    "antioughteseoughtought"
+   ],
+   [
+    "oughtoughteingeseought"
+   ],
+   [
+    "eingprin station"
+   ],
+   [
+    "eingationpripri"
+   ],
+   [
+    "n stn stoughtpri"
+   ],
+   [
+    "antibarationn st"
+   ],
+   [
+    "barbarpri"
+   ],
+   [
+    "n stbarn stcally"
+   ],
+   [
+    "ationeingn stpri"
+   ],
+   [
+    "antibareseationought"
+   ],
+   [
+    "antieingn stable"
+   ],
+   [
+    "n stoughtableationought"
+   ],
+   [
+    "prieingationationought"
+   ],
+   [
+    "ationpriablecallyought"
+   ],
+   [
+    "ationationoughtbarought"
+   ],
+   [
+    "eingeseationoughtought"
+   ],
+   [
+    "antieingantieing"
+   ],
+   [
+    "baroughtantin st"
+   ],
+   [
+    "n stationoughtese"
+   ],
+   [
+    "ationationcallypriought"
+   ],
+   [
+    "ationeingn st"
+   ],
+   [
+    "ablen steingation"
+   ],
+   [
+    "antin stn steseought"
+   ],
+   [
+    "eseeingableation"
+   ],
+   [
+    "oughtpriantianti"
+   ],
+   [
+    "callyoughtationable"
+   ],
+   [
+    "eseeingpri"
+   ],
+   [
+    "esecallyesepri"
+   ],
+   [
+    "ableablen stese"
+   ],
+   [
+    "n stn stantiese"
+   ],
+   [
+    "n stationoughtanti"
+   ],
+   [
+    "antipriprieseought"
+   ],
+   [
+    "ableationbarcallyought"
+   ],
+   [
+    "priantin stn st"
+   ],
+   [
+    "anticallyoughtcally"
+   ],
+   [
+    "eseantipriableought"
+   ],
+   [
+    "prieingn station"
+   ],
+   [
+    "prioughtantioughtought"
+   ],
+   [
+    "barantibarable"
+   ],
+   [
+    "bareseoughtpri"
+   ],
+   [
+    "oughtn stoughtcally"
+   ],
+   [
+    "ationeingcallycallyought"
+   ],
+   [
+    "antin stn stbarought"
+   ],
+   [
+    "ationcallyantiableought"
+   ],
+   [
+    "esen stpriableought"
+   ],
+   [
+    "prin steingantiought"
+   ],
+   [
+    "callyableoughtbarought"
+   ],
+   [
+    "esecallybarpri"
+   ],
+   [
+    "pricallyought"
+   ],
+   [
+    "antieingn stpri"
+   ],
+   [
+    "n stoughtprically"
+   ],
+   [
+    "esepriablebarought"
+   ],
+   [
+    "n stanticallyanti"
+   ],
+   [
+    "eseeingeingeing"
+   ],
+   [
+    "eingoughtableableought"
+   ],
+   [
+    "eingoughteseese"
+   ],
+   [
+    "esecallyablebarought"
+   ],
+   [
+    "ablebarn stable"
+   ],
+   [
+    "n stableantiation"
+   ],
+   [
+    "ationn stprieing"
+   ],
+   [
+    "ableoughtcallyought"
+   ],
+   [
+    "antin stableeseought"
+   ],
+   [
+    "eseationantiese"
+   ],
+   [
+    "oughtpribarbarought"
+   ],
+   [
+    "antioughtoughtought"
+   ],
+   [
+    "eseationationableought"
+   ],
+   [
+    "ationesecallyeseought"
+   ],
+   [
+    "oughtpricallypri"
+   ],
+   [
+    "n steingationpriought"
+   ],
+   [
+    "ationationeingbarought"
+   ],
+   [
+    "priablecallyation"
+   ],
+   [
+    "prieseantiese"
+   ],
+   [
+    "ableableableable"
+   ],
+   [
+    "ableprieseationought"
+   ],
+   [
+    "eingcallyantiese"
+   ],
+   [
+    "eseeingantibarought"
+   ],
+   [
+    "ablen stanticallyought"
+   ],
+   [
+    "eseablen stbarought"
+   ],
+   [
+    "oughtantieingpriought"
+   ],
+   [
+    "ationbarationought"
+   ],
+   [
+    "callyeingeingeing"
+   ],
+   [
+    "antiationn stationought"
+   ],
+   [
+    "callyn stbarpriought"
+   ],
+   [
+    "antiationantiese"
+   ],
+   [
+    "barbarbarese"
+   ],
+   [
+    "esen steingpriought"
+   ],
+   [
+    "ableeseoughtanti"
+   ],
+   [
+    "priableeseation"
+   ],
+   [
+    "oughtpriantiableought"
+   ],
+   [
+    "ableeingationcally"
+   ],
+   [
+    "callyationcallyable"
+   ],
+   [
+    "callycallyableantiought"
+   ],
+   [
+    "ationeingpriought"
+   ],
+   [
+    "antiantieingantiought"
+   ],
+   [
+    "oughtpriableableought"
+   ],
+   [
+    "callypricallyantiought"
+   ],
+   [
+    "callyanticallyanti"
+   ],
+   [
+    "eseoughtableable"
+   ],
+   [
+    "ationn stationoughtought"
+   ],
+   [
+    "ableationableeing"
+   ],
+   [
+    "n stableableantiought"
+   ],
+   [
+    "pribarablecally"
+   ],
+   [
+    "eingcallyeingcally"
+   ],
+   [
+    "pricallyeseought"
+   ],
+   [
+    "ablepriablen st"
+   ],
+   [
+    "oughtcallybaroughtought"
+   ],
+   [
+    "ableeingeingeing"
+   ],
+   [
+    "callypribarpriought"
+   ],
+   [
+    "ableesen stanti"
+   ],
+   [
+    "antiantieingpri"
+   ],
+   [
+    "antibarn stpriought"
+   ],
+   [
+    "eseationpricallyought"
+   ],
+   [
+    "n stationantiation"
+   ],
+   [
+    "barcallybarantiought"
+   ],
+   [
+    "oughtantieseantiought"
+   ],
+   [
+    "callyationn stpri"
+   ],
+   [
+    "ableeingprieseought"
+   ],
+   [
+    "eseantiableanti"
+   ],
+   [
+    "ablepriantiought"
+   ],
+   [
+    "callyablen steing"
+   ],
+   [
+    "callyantipriable"
+   ],
+   [
+    "ationpriationanti"
+   ],
+   [
+    "n stoughtationbarought"
+   ],
+   [
+    "n stantiationoughtought"
+   ],
+   [
+    "ableationbarpriought"
+   ],
+   [
+    "eingableantioughtought"
+   ],
+   [
+    "oughtcallybarcallyought"
+   ],
+   [
+    "oughtationbaroughtought"
+   ],
+   [
+    "ableesebarought"
+   ],
+   [
+    "oughtn stcallyese"
+   ],
+   [
+    "oughtablecallyation"
+   ],
+   [
+    "callypri"
+   ],
+   [
+    "callyationantiese"
+   ],
+   [
+    "pricallyeseeing"
+   ],
+   [
+    "n steseableanti"
+   ],
+   [
+    "eseeingantin st"
+   ],
+   [
+    "eseeingationationought"
+   ],
+   [
+    "esebarantically"
+   ],
+   [
+    "ationpriableation"
+   ],
+   [
+    "eingoughtableable"
+   ],
+   [
+    "antiablen stbarought"
+   ],
+   [
+    "eingbarable"
+   ],
+   [
+    "antin steseeing"
+   ],
+   [
+    "einganticallyoughtought"
+   ],
+   [
+    "ationpripriationought"
+   ],
+   [
+    "einganticallyable"
+   ],
+   [
+    "callyoughteseeseought"
+   ],
+   [
+    "ationoughtesepriought"
+   ],
+   [
+    "ableationbareing"
+   ],
+   [
+    "eingbarantiationought"
+   ],
+   [
+    "eingantiantipri"
+   ],
+   [
+    "eseoughtbaroughtought"
+   ],
+   [
+    "n stantiantieseought"
+   ],
+   [
+    "bareingpriable"
+   ],
+   [
+    "bareingcallyese"
+   ],
+   [
+    "ablen stn steing"
+   ],
+   [
+    "pribareseoughtought"
+   ],
+   [
+    "eseantiationationought"
+   ],
+   [
+    "priesebarationought"
+   ],
+   [
+    "oughtantin stable"
+   ],
+   [
+    "prieingationantiought"
+   ],
+   [
+    "oughteingcallyoughtought"
+   ],
+   [
+    "bareseationn st"
+   ],
+   [
+    "priableoughtought"
+   ],
+   [
+    "ablen stationpriought"
+   ],
+   [
+    "priesebaration"
+   ],
+   [
+    "barationn stable"
+   ],
+   [
+    "callyoughtbaroughtought"
+   ],
+   [
+    "barpriationanti"
+   ],
+   [
+    "eingantically"
+   ],
+   [
+    "n stableableanti"
+   ],
+   [
+    "ationationoughtable"
+   ],
+   [
+    "eseationbarn st"
+   ],
+   [
+    "priableationpri"
+   ],
+   [
+    "antieingeseableought"
+   ],
+   [
+    "ationoughtn stought"
+   ],
+   [
+    "priationbarpri"
+   ],
+   [
+    "eingn stcallyn st"
+   ],
+   [
+    "barbarcallypriought"
+   ],
+   [
+    "ationpricallyable"
+   ],
+   [
+    "callyanticallyought"
+   ],
+   [
+    "callyoughtoughtantiought"
+   ],
+   [
+    "oughtcallyationoughtought"
+   ],
+   [
+    "bareingcallyationought"
+   ],
+   [
+    "esebarn stationought"
+   ],
+   [
+    "ationbarbareseought"
+   ],
+   [
+    "baresecallyought"
+   ],
+   [
+    "baroughtbareing"
+   ],
+   [
+    "ableantin st"
+   ],
+   [
+    "antiableeingoughtought"
+   ],
+   [
+    "oughtantipricallyought"
+   ],
+   [
+    "eingoughteingese"
+   ],
+   [
+    "eingableoughtbarought"
+   ],
+   [
+    "priantibarable"
+   ],
+   [
+    "ablepricallyable"
+   ],
+   [
+    "ationbarbarableought"
+   ],
+   [
+    "n stanticallyn st"
+   ],
+   [
+    "callycallyprieing"
+   ],
+   [
+    "oughtprioughtoughtought"
+   ],
+   [
+    "priationeseeing"
+   ],
+   [
+    "eingantiantipriought"
+   ],
+   [
+    "prioughtpri"
+   ],
+   [
+    "barableationpri"
+   ],
+   [
+    "ableationantieing"
+   ],
+   [
+    "ableantipriation"
+   ],
+   [
+    "barpri"
+   ],
+   [
+    "antiableese"
+   ],
+   [
+    "ationbarcallyation"
+   ],
+   [
+    "priprieing"
+   ],
+   [
+    "ationantioughtation"
+   ],
+   [
+    "antieseoughteseought"
+   ],
+   [
+    "antin stableationought"
+   ],
+   [
+    "pricallyationation"
+   ],
+   [
+    "callybareingcallyought"
+   ],
+   [
+    "oughtn stn stableought"
+   ],
+   [
+    "n stprieseableought"
+   ],
+   [
+    "callyeingcallyantiought"
+   ],
+   [
+    "esen stationcally"
+   ],
+   [
+    "callybarationbarought"
+   ],
+   [
+    "callyantibarpriought"
+   ],
+   [
+    "ableeingableese"
+   ],
+   [
+    "ableoughtcallyantiought"
+   ],
+   [
+    "antibarn steing"
+   ],
+   [
+    "barationeingcally"
+   ],
+   [
+    "callyprin stbarought"
+   ],
+   [
+    "esepricallyationought"
+   ],
+   [
+    "bareseableableought"
+   ],
+   [
+    "ationcallyableese"
+   ],
+   [
+    "eseeingantieing"
+   ],
+   [
+    "callyeingantiese"
+   ],
+   [
+    "eingeseoughtcally"
+   ],
+   [
+    "antiantipribarought"
+   ],
+   [
+    "eseationpriation"
+   ],
+   [
+    "antianticallyese"
+   ],
+   [
+    "ationcallyeseation"
+   ],
+   [
+    "eingcallyesen st"
+   ],
+   [
+    "ationprin steseought"
+   ],
+   [
+    "n stationableought"
+   ],
+   [
+    "n stoughtbarableought"
+   ],
+   [
+    "prioughtn stcally"
+   ],
+   [
+    "oughtbarbarpri"
+   ],
+   [
+    "oughtesecallyeing"
+   ],
+   [
+    "antiableationation"
+   ],
+   [
+    "n stcallybaroughtought"
+   ],
+   [
+    "oughtablen stableought"
+   ],
+   [
+    "prin stantianti"
+   ],
+   [
+    "barbaroughtation"
+   ],
+   [
+    "eseablen stn st"
+   ],
+   [
+    "barantiantically"
+   ],
+   [
+    "eingesepri"
+   ],
+   [
+    "callyantin stantiought"
+   ],
+   [
+    "antically"
+   ],
+   [
+    "oughtableantiation"
+   ],
+   [
+    "prin stcallyn st"
+   ],
+   [
+    "oughtprianti"
+   ],
+   [
+    "eingoughtantioughtought"
+   ],
+   [
+    "n stpriablecallyought"
+   ],
+   [
+    "ableantioughtable"
+   ],
+   [
+    "eingationbaration"
+   ],
+   [
+    "esebarpripriought"
+   ],
+   [
+    "ationeseationanti"
+   ],
+   [
+    "n stcallyeingcallyought"
+   ],
+   [
+    "ableoughtbarn st"
+   ],
+   [
+    "oughtableantiought"
+   ],
+   [
+    "eingationantically"
+   ],
+   [
+    "ableoughtanti"
+   ],
+   [
+    "ableationcallyable"
+   ],
+   [
+    "n stationeseable"
+   ],
+   [
+    "ableeseanticallyought"
+   ],
+   [
+    "eingoughtantipri"
+   ],
+   [
+    "oughtantiationcallyought"
+   ],
+   [
+    "prieingcally"
+   ],
+   [
+    "ationbarationantiought"
+   ],
+   [
+    "callyn stn st"
+   ],
+   [
+    "oughtpribarableought"
+   ],
+   [
+    "pricallyn stationought"
+   ],
+   [
+    "callyoughtn stpriought"
+   ],
+   [
+    "barbarpriought"
+   ],
+   [
+    "esebareingese"
+   ],
+   [
+    "eseeseationbarought"
+   ],
+   [
+    "eingeseeseeing"
+   ],
+   [
+    "oughtpriableeing"
+   ],
+   [
+    "ableationantiought"
+   ],
+   [
+    "antibarprically"
+   ],
+   [
+    "eseantibarable"
+   ],
+   [
+    "baranticallyableought"
+   ],
+   [
+    "esecallyantically"
+   ],
+   [
+    "oughtcallyn stoughtought"
+   ],
+   [
+    "eingantieingableought"
+   ],
+   [
+    "n stcallypriableought"
+   ],
+   [
+    "antibarbarpriought"
+   ],
+   [
+    "n stationbaranti"
+   ],
+   [
+    "n stpriation"
+   ],
+   [
+    "antioughtableation"
+   ],
+   [
+    "ablebarantiation"
+   ],
+   [
+    "n stoughteingation"
+   ],
+   [
+    "callyn stbarcallyought"
+   ],
+   [
+    "esepribaroughtought"
+   ],
+   [
+    "barantin stought"
+   ],
+   [
+    "eingoughteingpri"
+   ],
+   [
+    "ationprioughteseought"
+   ],
+   [
+    "oughteingantiationought"
+   ],
+   [
+    "ationprin stable"
+   ],
+   [
+    "priableoughtbarought"
+   ],
+   [
+    "callyeinganti"
+   ],
+   [
+    "n stn stableationought"
+   ],
+   [
+    "ablebareingeseought"
+   ],
+   [
+    "ableeseoughtantiought"
+   ],
+   [
+    "priablepriationought"
+   ],
+   [
+    "oughtn steingpri"
+   ],
+   [
+    "oughtcallyableeseought"
+   ],
+   [
+    "pribareingese"
+   ],
+   [
+    "eseesepripriought"
+   ],
+   [
+    "antibareingpri"
+   ],
+   [
+    "ablen stableoughtought"
+   ],
+   [
+    "oughtantieingese"
+   ],
+   [
+    "eingantibarcally"
+   ],
+   [
+    "barn stbarable"
+   ],
+   [
+    "ablen stantioughtought"
+   ],
+   [
+    "oughtationanti"
+   ],
+   [
+    "eingprieingought"
+   ],
+   [
+    "n stn stprically"
+   ],
+   [
+    "callyesen stcallyought"
+   ],
+   [
+    "ationoughteseableought"
+   ],
+   [
+    "ableableanticallyought"
+   ],
+   [
+    "eingeingantibarought"
+   ],
+   [
+    "esecallyn stcally"
+   ],
+   [
+    "antiablebaration"
+   ],
+   [
+    "baranticallyationought"
+   ],
+   [
+    "ationpriese"
+   ],
+   [
+    "antiable"
+   ],
+   [
+    "ationoughteingought"
+   ],
+   [
+    "ablepripriantiought"
+   ],
+   [
+    "callybarcallyought"
+   ],
+   [
+    "eseoughtantiableought"
+   ],
+   [
+    "eseanticallyationought"
+   ],
+   [
+    "bareingn stoughtought"
+   ],
+   [
+    "n stationeseese"
+   ],
+   [
+    "eingationn stoughtought"
+   ],
+   [
+    "callypriantiation"
+   ],
+   [
+    "n stn stoughtn st"
+   ]
+  ]
+ },
+ "customer-count-income-band-9": {
+  "columns": [
+   "Customer Count"
+  ],
+  "rows": [
+   [
+    175407.0
+   ]
+  ]
+ }
 }

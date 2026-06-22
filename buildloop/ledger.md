@@ -351,3 +351,167 @@ unstable cases: none (all unanimous)
 ```
 
 - Hypotheses: (pending — Haiku digest)
+
+## Run — 20260620T055335Z → 20260620T060747Z
+- Record: /home/jsy/projects/mqo-eval/buildloop/results/claude-oauth/docker-local/tpcds_sql_derived_limited/20260620T055336Z-tpcds_sq.json
+- Gate: k=1
+
+```
+pass rate: 2/20 (10%)
+wrong:       18
+no_bind:     0
+parse_error: 0
+skipped:     1
+mean_recall: 1.000
+mean_jaccard: 1.000
+```
+
+### Unstable cases (next-DREAM targets)
+```
+unstable cases: none (all unanimous)
+```
+
+- Hypotheses: (pending — Haiku digest)
+
+## Run — 20260620T093139Z → 20260620T104402Z
+- Record: /home/jsy/projects/mqo-eval/buildloop/results/claude-oauth/docker-local/tpcds_sql_derived_limited/20260620T093139Z-tpcds_sq.json
+- Gate: k=1
+
+```
+pass rate: 4/20 (20%)
+wrong:       16
+no_bind:     0
+parse_error: 0
+skipped:     1
+mean_recall: 0.613
+mean_jaccard: 0.613
+```
+
+### Unstable cases (next-DREAM targets)
+```
+unstable cases: none (all unanimous)
+```
+
+- Hypotheses: (pending — Haiku digest)
+
+## Run — 20260620T220821Z → 20260620T230932Z
+- Record: /home/jsy/projects/mqo-eval/buildloop/results/claude-oauth/docker-local/tpcds_sql_derived_limited/20260620T220821Z-tpcds_sq.json
+- Gate: k=1
+
+```
+pass rate: 2/20 (10%)
+wrong:       18
+no_bind:     0
+parse_error: 0
+skipped:     1
+mean_recall: 0.780
+mean_jaccard: 0.604
+```
+
+### Unstable cases (next-DREAM targets)
+```
+unstable cases: none (all unanimous)
+```
+
+- Hypotheses:
+  Invalid API key · Fix external API key
+  (digest failed — manually review: uv run mqo-eval summary --results /home/jsy/projects/mqo-eval/buildloop/results/claude-oauth/docker-local/tpcds_sql_derived_limited/20260620T220821Z-tpcds_sq.json)
+
+## Run — 20260621T021605Z → 20260621T025115Z
+- Record: /home/jsy/projects/mqo-eval/buildloop/results/claude-oauth/docker-local/tpcds_sql_derived_limited/20260621T021605Z-tpcds_sq.json
+- Gate: k=1
+
+```
+pass rate: 2/20 (10%)
+wrong:       18
+no_bind:     0
+parse_error: 0
+skipped:     1
+mean_recall: 0.650
+mean_jaccard: 0.650
+```
+
+### Unstable cases (next-DREAM targets)
+```
+unstable cases: none (all unanimous)
+```
+
+- Hypotheses:
+  express-shipping-carriers: Backend TLS handshake failure — service unreachable
+  midway-stores: Backend TLS handshake failure — PGWire protocol down
+  fairview-warehouses: Query execution timeout — 600s limit hit, likely complex join cardinality
+  catalog-customer-count: Backend TLS connectivity — measure exists but AtScale unreachable
+  total-quantity-sold-per-year: MQO server TLS handshake failure — infrastructure down
+  product-count-per-category: Backend TLS failure — tpcds_benchmark_model unreachable
+  unique-stores-tennessee: PGWire TLS handshake failure — service unavailable
+  corpcorp-brand-products: Schema mismatch — model returned 'Product Name' vs expected 'Item Product Name'
+  able-manufacturer-brands: MCP tool invocation failure — schemas load but tools not callable
+  store-employee-counts: AtScale TLS handshake failure — backend down
+  avg-sales-quantity-per-store: MQO engine TLS error — temporary infrastructure outage
+  total-net-profit-per-product: Backend TLS handshake — connectivity down
+  store-quantity-sold-per-brand: Database TLS failure — model unreachable
+  web-sales-per-customer-state: PostgreSQL TLS handshake — backend unavailable
+  customer-vehicle-count-income-band-9: Backend TLS handshake — tpcds model unreachable
+  net-profit-tier-by-store-gender-2002: MCP server TLS failures — model found but queries blocked
+  customers-ese-store-2001: Backend TLS handshake — query service down
+  customer-details-new-jersey: 50k row cardinality limit + TLS errors — both projection and aggregation paths fail
+  
+  NEXT DREAM: mqo-backend-resilience: Implement connection pooling, circuit-breaker, and retry logic to survive TLS handshake cascades (15/18 failures)
+  NEXT DREAM: mqo-schema-normalization: Add column synonym resolution and field mapping to fix semantic mismatches like 'Product Name' vs 'Item Product Name'
+
+## Run — 20260622T023229Z → 20260622T025238Z
+- Record: /home/jsy/projects/mqo-eval/buildloop/results/claude-oauth/docker-local/tpcds_sql_derived_limited/20260622T023230Z-tpcds_sq.json
+- Gate: k=1
+
+```
+pass rate: 17/20 (85%)
+wrong:       3
+no_bind:     0
+parse_error: 0
+skipped:     1
+mean_recall: 0.882
+mean_jaccard: 0.879
+```
+
+### Unstable cases (next-DREAM targets)
+```
+unstable cases: none (all unanimous)
+```
+
+- Hypotheses:
+  product-count-per-category: Column case normalization incomplete (Title-Case vs snake_case mismatch persists)
+  customer-vehicle-count-income-band-9: Model semantic confusion on multi-table join (vehicle/income/customer relationship)
+  customer-details-new-jersey: Over-filtering / underscore column selection on stateful queries
+  
+  NEXT DREAM: column-alias-fuzzy-matching: Bidirectional fuzzy matching for normalized column names (Levenshtein + semantic tokens)
+  NEXT DREAM: semantic-query-router: Inject per-query relationship graph to disambiguate joins and filter predicates
+
+## Run — 20260622T055140Z → 20260622T060511Z (one-off interactive; STOP present, chain stays paused)
+- Record: /home/jsy/projects/mqo-eval/buildloop/results/claude-oauth/docker-local/tpcds_sql_derived_limited/20260622T055140Z-tpcds_sq.json
+- Gate: k=1 (BUG1 member-filter type-quoting fix, mqo-mcp b4070a4)
+
+```
+pass rate: 18/20 (90%)
+wrong:       2
+no_bind:     0
+parse_error: 0
+skipped:     2
+mean_recall: 0.928
+mean_jaccard: 0.926
+```
+
+### Failing cases
+```
+- product-count-per-category: j=0.9090909090909091 rr=0.9090909090909091 cj=1.0
+  recall=0.909 jaccard=0.909
+  cand_cols=['Product Category', 'total_product_count']  ref_cols=['Product category', 'Total Product Count']
+- web-sales-per-customer-state: j=0.0 rr=0.0 cj=0.6666666666666666
+  recall=0.000 jaccard=0.000
+  cand_cols=['Customer State', 'Customer State Name', 'web_sales']  ref_cols=['Customer State Name', 'Web Sales']
+```
+
+- Witness customer-count-income-band-9: PASS (verdict=correct). BUG1 fix is live — installed router emits `WHERE "Income Band" IN (9)` (bare), CE→175407=gold. This flipped the corpus 17→18 (+1). No `db error` / member-quoting failures remain.
+- Hypotheses:
+  - product-count-per-category (rr=0.909, cj=1.0): ROOT CAUSE C residual — NULL/"Unknown" product-category member dropped from the SQL projection (10/11 rows; columns match case-insensitively). The held C PRD targets mqo-dax-compiler, which `--force-backend sql` BYPASSES — wrong layer. Re-diagnose null-member fidelity at the SQL projection (mqo-backend-router GROUP BY / COALESCE keep-null).
+  - web-sales-per-customer-state (rr=0.0, cj=0.667): agent grounded a redundant extra dimension ('Customer State' alongside 'Customer State Name'), changing the row tuples → zero row overlap. Not BUG1-related; candidate model picked a sibling level. Candidate fix: validator rule rejecting a coarser sibling level when a finer level of the same hierarchy is already projected, OR grounding/prompt coaching.
+  - NEXT DREAM (both small, would push 90%→~100% if they land): (1) PRD-mqo-sql-projection-null-member-fidelity (SQL layer, keep NULL/Unknown members in measureless+grouped projections); (2) PRD-mqo-redundant-hierarchy-level-guard (validator). DIAGNOSE at the SQL layer first — do not build into mqo-dax-compiler (the bypassed layer trap).
