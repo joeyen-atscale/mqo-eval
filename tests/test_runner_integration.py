@@ -147,7 +147,7 @@ def test_oracle_error_continues(tmp_path: Path) -> None:
     no_bind = [c for c in record.cases if c.verdict == "no_bind"]
     assert len(no_bind) >= 1  # the oracle-error case
     # run should have continued (more cases processed)
-    assert len(record.cases) == 21  # 20 active + 1 skipped
+    assert len(record.cases) == 22  # 20 active + 2 skipped
 
 
 # 6 — oversize reference: verdict = oversize

@@ -176,9 +176,9 @@ def _stringify_tool_result_content(content: Any) -> tuple[str, list | None]:
 def _extract_bound_sql(text: str) -> str | None:
     """Pull a server-echoed bound SQL/DAX string out of a tool_result, if present.
 
-    The mqo-mcp server does not echo compiled SQL today (G3 records ``null`` until a
-    diagnostic flag lands), but this looks for the obvious keys so the trace lights
-    up automatically the moment the server starts exposing them.
+    mqo-mcp-server (v0.56.0) echoes the compiled query under ``compiled_query`` (SQL
+    when the SQL backend is chosen, DAX/MDX for the multidimensional backends). The
+    older ``bound_sql``/``dax`` names are kept first for forward/backward compat.
     """
     try:
         obj = json.loads(text)
@@ -186,11 +186,38 @@ def _extract_bound_sql(text: str) -> str | None:
         return None
     if not isinstance(obj, dict):
         return None
-    for key in ("bound_sql", "compiled_sql", "sql", "bound_dax", "dax"):
+    for key in ("bound_sql", "compiled_sql", "sql", "bound_dax", "dax",
+                "compiled_query", "compiled_dax", "compiled_mdx"):
         val = obj.get(key)
         if val:
             return str(val)
     return None
+
+
+# Server-side signal fields the mqo-mcp result envelope carries (v0.56.0) that are
+# load-bearing for diagnosis but were previously buried inside the truncated result
+# blob. Surfacing them as first-class trace fields is the cheap-observability win.
+_SIGNAL_KEYS = (
+    "backend",            # which backend executed (sql | dax | mdx)
+    "routing_reason",     # why the router picked that backend
+    "row_count",          # rows the server returned
+    "blank_member_rows",  # count of blank/NULL dimension-member rows (fidelity fix)
+    "notes",              # advisory strings (e.g. the BLANK MEMBERS guidance)
+    "handle",             # dataset handle id (handle-first results)
+    "filters_dropped",    # any filters the binder could not honor
+)
+
+
+def _extract_signals(text: str) -> dict[str, Any] | None:
+    """Pull the mqo-mcp result-envelope signal fields out of a tool_result."""
+    try:
+        obj = json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return None
+    if not isinstance(obj, dict):
+        return None
+    sig = {k: obj[k] for k in _SIGNAL_KEYS if obj.get(k) not in (None, [], "")}
+    return sig or None
 
 
 def parse_trace_from_stream(lines: list[str]) -> list[dict[str, Any]]:
@@ -257,6 +284,9 @@ def parse_trace_from_stream(lines: list[str]) -> list[dict[str, Any]]:
                     if rows is not None:
                         entry["result_rows"] = rows
                     entry["result"] = text[:TRACE_RESULT_CAP]
+                    signals = _extract_signals(text)
+                    if signals is not None:
+                        entry["signals"] = signals
                 bound = _extract_bound_sql(text)
                 entry["bound_sql"] = bound  # explicit null when unavailable (G3)
 

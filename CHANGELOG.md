@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.8.1 — trace-observability
+Surfaces the mqo-mcp-server v0.56.0 result-envelope signals in `--trace`: `_extract_bound_sql` now reads `compiled_query`/`compiled_dax`/`compiled_mdx` (the keys the server actually emits) so compiled SQL/DAX lights up per case, and a new `_extract_signals` pulls `backend`, `routing_reason`, `row_count`, `blank_member_rows`, `notes[]`, and `handle` as first-class trace fields rendered by `mqo-eval trace`. Corpus-shape tests updated for the second disabled BUG-2 case (`customer-details-new-jersey`): now 22 total / 20 active / 2 skipped. README quickstart output and test count (172) corrected. All 172 tests green.
+
 ## v0.8.0 — gold-via-cli
 Adds `--oracle cli` backend: shells out to `mqo-pg-query` (Rust CLI with OIDC/TLS auth) to mint gold `ReferenceTable` per case. New `src/mqo_eval/oracle_cli.py` with `CliOracleConfig`, `execute_golden_cli`, and `cli_precheck` (eager SELECT-1 pre-check fails fast <10s if binary is missing/misconfigured). Wired into `runner.py` and `cli.py` alongside existing `fixture`/`pgwire` oracles; adds `--gold-query-cmd` and `--cli-endpoint` flags. 23 new mocked tests; all 108 tests green; ruff+mypy clean.
 

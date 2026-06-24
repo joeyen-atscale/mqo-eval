@@ -16,9 +16,9 @@ REPO_ROOT = Path(__file__).parent.parent
 def test_ac_1_corpus_load() -> None:
     from mqo_eval.corpus import load_corpus
     c = load_corpus(CORPUS)
-    assert len(c.queries) == 21
+    assert len(c.queries) == 22
     assert len(c.active) == 20
-    assert len(c.skipped) == 1
+    assert len(c.skipped) == 2
 
 
 # AC-2
@@ -61,7 +61,7 @@ def test_ac_3_stub_run_writes_record(tmp_path: Path) -> None:
     data = json.loads(dest.read_text())
     assert data["agent"] == "stub"
     assert data["summary"]["active"] == 20
-    assert data["summary"]["skipped"] == 1
+    assert data["summary"]["skipped"] == 2
 
 
 # AC-4

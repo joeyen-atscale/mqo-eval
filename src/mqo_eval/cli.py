@@ -214,7 +214,25 @@ def _cmd_trace(args: argparse.Namespace) -> int:
                 print(textwrap.indent(json.dumps(e["args"], indent=2), "    "))
             if "bound_sql" in e:
                 bs = e["bound_sql"]
-                print(f"  bound SQL: {bs if bs else 'null (server does not echo SQL yet)'}")
+                if bs:
+                    print("  bound query (compiled):")
+                    print(textwrap.indent(str(bs), "    "))
+                else:
+                    print("  bound query: null (server did not echo a compiled query)")
+            sig = e.get("signals")
+            if sig:
+                for label, key in (
+                    ("backend", "backend"),
+                    ("routing", "routing_reason"),
+                    ("row_count", "row_count"),
+                    ("blank_member_rows", "blank_member_rows"),
+                    ("handle", "handle"),
+                    ("filters_dropped", "filters_dropped"),
+                ):
+                    if key in sig:
+                        print(f"  {label}: {sig[key]}")
+                for note in sig.get("notes", []) or []:
+                    print(f"  ⚑ note: {note}")
             if e.get("is_error"):
                 print(f"  error: {e.get('error', '')}")
             elif e.get("result_rows") is not None:

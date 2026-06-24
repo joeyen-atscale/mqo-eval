@@ -34,8 +34,8 @@ uv run mqo-eval run \
 ```
 
 ```
-running 20 active cases (1 skipped) via agent 'stub'
-summary: pass rate: 0/20 (0%) | wrong=0 no_bind=20 parse_errors=0 skipped=1
+running 20 active cases (2 skipped) via agent 'stub'
+summary: pass rate: 0/20 (0%) | wrong=0 no_bind=20 parse_errors=0 skipped=2
 record: results/stub/fixture/tpcds_sql_derived_limited/<timestamp>-tpcds_sq.json
 ```
 
@@ -121,4 +121,4 @@ The harness also checks for a live eval tick lock before starting and refuses to
 
 ## Status
 
-Version 0.8.0. The core — corpus, contract, scoring, record/replay — is covered by the test suite (`uv run pytest`; 134 tests, all offline and mocked). The live oracles (`pgwire`, `cli`) and the `oai-agent` / `claude-oauth` agents require a configured AtScale cluster and credentials, which CI does not exercise.
+Version 0.8.1. The core — corpus, contract, scoring, record/replay — is covered by the test suite (`uv run pytest`; 172 tests, all offline and mocked). The live oracles (`pgwire`, `cli`) and the `oai-agent` / `claude-oauth` agents require a configured AtScale cluster and credentials, which CI does not exercise.

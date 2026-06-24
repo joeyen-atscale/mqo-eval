@@ -19,3 +19,7 @@ buildloop/*.log
 buildloop/results/
 buildloop/mcp-aws-live.env
 buildloop/*-live.env
+buildloop/STOP
+
+# Local agent worktrees / Claude Code workspace state — never commit
+.claude/
